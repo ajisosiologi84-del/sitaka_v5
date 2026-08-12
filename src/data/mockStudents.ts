@@ -447,11 +447,51 @@ function setupAllSheets() {
   return { sheetStudents, sheetLaptops, sheetProktor, sheetMaster };
 }
 
+/**
+ * Mendukung HTTP OPTIONS Preflight Request untuk koneksi dari Vercel (https://sitaka-v5.vercel.app/) & Browser / Perangkat Lain
+ */
+function doOptions(e) {
+  return responseJSON({ status: "success", message: "CORS preflight OK" });
+}
+
 function doGet(e) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheets = setupAllSheets();
-    
+
+    var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "getAll";
+
+    if (action === "ping" || action === "test" || action === "getStatus") {
+      var sRows = sheets.sheetStudents.getDataRange().getValues();
+      var lRows = sheets.sheetLaptops.getDataRange().getValues();
+      var pRows = sheets.sheetProktor.getDataRange().getValues();
+      var mRows = sheets.sheetMaster.getDataRange().getValues();
+
+      var sCount = Math.max(0, sRows.length - 1);
+      var lCount = Math.max(0, lRows.length - 1);
+      var pCount = Math.max(0, pRows.length - 1);
+      var mCount = Math.max(0, mRows.length - 1);
+      var tot = sCount + lCount + pCount + mCount;
+
+      return responseJSON({
+        status: "success",
+        connected: true,
+        message: "Koneksi Google Sheets Apps Script Berhasil Terhubung!",
+        spreadsheetName: ss.getName(),
+        spreadsheetId: ss.getId(),
+        spreadsheetUrl: ss.getUrl(),
+        sheets: [SHEET_STUDENTS, SHEET_LAPTOPS, SHEET_PROKTOR, SHEET_MASTER],
+        totalRows: tot,
+        counts: {
+          students: sCount,
+          laptops: lCount,
+          proktorList: pCount,
+          masterStudents: mCount
+        },
+        time: new Date().toISOString()
+      });
+    }
+
     // Read Student Data
     const studentRows = sheets.sheetStudents.getDataRange().getValues();
     const students = studentRows.length > 1 ? studentRows.slice(1).map(parseStudentRow) : [];

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Code2,
   Copy,
@@ -24,6 +24,14 @@ export const AppsScriptView: React.FC = () => {
     message: string;
   }>({ type: 'idle', message: '' });
 
+  // Keep gasUrlInput updated if URL is synced from Cloud/Firestore or localStorage
+  useEffect(() => {
+    const currentStoredUrl = getAppsScriptUrl();
+    if (currentStoredUrl && currentStoredUrl !== gasUrlInput) {
+      setGasUrlInput(currentStoredUrl);
+    }
+  }, []);
+
   const handleCopyCode = () => {
     navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_CODE);
     setCopied(true);
@@ -31,10 +39,18 @@ export const AppsScriptView: React.FC = () => {
   };
 
   const handleSaveUrl = () => {
-    saveAppsScriptUrl(gasUrlInput);
+    if (!gasUrlInput.trim()) {
+      setTestStatus({
+        type: 'error',
+        message: 'Mohon masukkan URL Web App Google Apps Script.',
+      });
+      return;
+    }
+    const cleanUrl = gasUrlInput.trim();
+    saveAppsScriptUrl(cleanUrl, true);
     setTestStatus({
       type: 'success',
-      message: 'URL Google Apps Script berhasil disimpan di memori lokal.',
+      message: 'URL Google Apps Script berhasil disimpan & disinkronkan ke Cloud (Firestore). URL ini otomatis terhubung untuk seluruh perangkat dan browser yang membuka https://sitaka-v5.vercel.app/.',
     });
   };
 
@@ -67,7 +83,7 @@ export const AppsScriptView: React.FC = () => {
 
     setTestStatus({
       type: 'testing',
-      message: 'Menghubungkan ke Google Apps Script Web App...',
+      message: 'Menghubungkan ke Google Apps Script Web App dari Vercel (https://sitaka-v5.vercel.app/)...',
     });
 
     try {
@@ -99,16 +115,16 @@ export const AppsScriptView: React.FC = () => {
       }
 
       if (isSuccess && json) {
-        saveAppsScriptUrl(cleanUrl);
+        saveAppsScriptUrl(cleanUrl, true);
         const totalRows = (json.students?.length || 0) + (json.laptops?.length || 0) + (json.masterStudents?.length || 0);
         setTestStatus({
           type: 'success',
-          message: `Koneksi Berhasil! Google Sheet terhubung sempurna (${totalRows} total data terdeteksi).`,
+          message: `Koneksi Berhasil! Google Sheet terhubung sempurna (${totalRows} total data terdeteksi). URL telah disinkronkan ke Cloud untuk semua perangkat (termasuk Vercel https://sitaka-v5.vercel.app/).`,
         });
       } else if (json && json.message) {
         setTestStatus({
           type: 'error',
-          message: `Respon dari App Script: ${json.message}`,
+          message: `Respon dari Apps Script: ${json.message}`,
         });
       } else {
         throw new Error('CORS_OR_AUTH_ERROR');
@@ -117,10 +133,11 @@ export const AppsScriptView: React.FC = () => {
       setTestStatus({
         type: 'error',
         message:
-          'Gagal terhubung! Penyebab di Vercel (sitakav4.vercel.app):\n' +
-          '1. "Who has access" belum diset ke "Anyone" (Siapa Saja) di Apps Script.\n' +
-          '2. Lupa memilih "New version" saat re-deploy.\n' +
-          '3. Google meminta otorisasi izin Drive/Spreadsheet.',
+          'Gagal terhubung dari Vercel (https://sitaka-v5.vercel.app/) / Browser Lain!\n' +
+          '1. Salin ulang Kode Code.gs terbaru di bawah (termasuk fungsi doOptions untuk CORS).\n' +
+          '2. Di Apps Script: Deploy > Manage deployments > Edit > Ubah "Who has access" ke "Anyone" (Siapa saja).\n' +
+          '3. Wajib buat "New version" (Versi Baru) saat re-deploy di Apps Script.\n' +
+          '4. Pastikan menggunakan URL Web App berakhiran /exec.',
       });
     }
   };
@@ -256,28 +273,34 @@ export const AppsScriptView: React.FC = () => {
         <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-4 space-y-2 text-xs">
           <div className="flex items-center gap-2 font-bold text-amber-900">
             <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>Mengapa URL tidak terhubung saat diakses dari Vercel (sitakav4.vercel.app)?</span>
+            <span>Solusi Koneksi Google Apps Script di Vercel (https://sitaka-v5.vercel.app/) &amp; Perangkat Lain</span>
           </div>
           <p className="text-amber-800 leading-relaxed">
-            Jika Web App Apps Script berjalan di lokal namun tidak terhubung di Vercel, hal ini disebabkan oleh <strong>kebijakan CORS &amp; Otorisasi Google Apps Script</strong>. Berikut 3 langkah wajib untuk mengaktifkannya:
+            Jika Web App Apps Script berjalan di lokal namun tidak terhubung di Vercel (<code>https://sitaka-v5.vercel.app/</code>) atau browser/HP lain, lakukan 4 langkah penting berikut:
           </p>
           <ol className="list-decimal list-inside space-y-1.5 text-amber-900 font-medium pl-1">
             <li>
+              <strong>Gunakan Kode Code.gs Terbaru (Dukungan CORS doOptions):</strong><br />
+              <span className="text-slate-600 font-normal ml-5 inline-block">
+                Kode Apps Script telah diperbarui di bawah dengan handler <code>doOptions(e)</code> agar browser di domain Vercel tidak memblokir permintaan preflight CORS.
+              </span>
+            </li>
+            <li>
               <strong>Wajib Atur "Who has access" = "Anyone" (Siapa Saja):</strong><br />
               <span className="text-slate-600 font-normal ml-5 inline-block">
-                Di Apps Script editor &gt; <strong>Deploy</strong> &gt; <strong>Manage deployments</strong> &gt; Edit (Pensil) &gt; ubah <em>Who has access</em> dari <u>Only myself</u> menjadi <strong className="text-emerald-700">Anyone</strong>. Jika diset "Only myself", browser di Vercel akan memblokirnya.
+                Di Apps Script editor &gt; <strong>Deploy</strong> &gt; <strong>Manage deployments</strong> &gt; Edit (Icon Pensil) &gt; ubah <em>Who has access</em> dari <u>Only myself</u> menjadi <strong className="text-emerald-700">Anyone (Siapa saja)</strong>.
               </span>
             </li>
             <li>
-              <strong>Pilih "New version" (Versi Baru) saat Re-Deploy:</strong><br />
+              <strong>Wajib Pilih "New version" (Versi Baru) saat Re-Deploy:</strong><br />
               <span className="text-slate-600 font-normal ml-5 inline-block">
-                Perubahan kode tidak akan aktif sebelum Anda membuat Versi Baru di Apps Script (Deploy &gt; New deployment &gt; Deploy).
+                Setiap kali mengubah kode Apps Script, Anda harus membuat <strong>New version</strong> (Versi Baru) agar perubahan aktif di Web App URL.
               </span>
             </li>
             <li>
-              <strong>Gunakan URL yang berakhiran `/exec`:</strong><br />
+              <strong>Sinkronisasi Cloud Otomatis:</strong><br />
               <span className="text-slate-600 font-normal ml-5 inline-block">
-                Pastikan URL yang dimasukkan berakhiran <code>/exec</code> (bukan <code>/dev</code>).
+                Saat Anda menyimpan URL di form di atas, URL disinkronkan ke Cloud (Firestore) sehingga <strong>semua perangkat dan browser yang membuka <code>https://sitaka-v5.vercel.app/</code></strong> akan langsung terhubung tanpa perlu menginput ulang URL.
               </span>
             </li>
           </ol>

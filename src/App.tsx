@@ -193,6 +193,14 @@ export default function App() {
     fetchSystemSettingsFromFirestore('securityPolicy').then((remotePolicy) => {
       if (remotePolicy) saveSecurityPolicy(remotePolicy, false);
     });
+    fetchSystemSettingsFromFirestore('appsScriptUrl').then((remoteGasUrl) => {
+      if (typeof remoteGasUrl === 'string' && remoteGasUrl.trim()) {
+        const cleanRemoteUrl = remoteGasUrl.trim();
+        setAppsScriptUrl(cleanRemoteUrl);
+        saveAppsScriptUrl(cleanRemoteUrl, false);
+        syncFromGoogleSheets(cleanRemoteUrl);
+      }
+    });
 
     // Realtime Subscriptions for ALL System Settings across all connected devices/browsers
     const unsubPasswords = subscribeSystemSettingFromFirestore('passwords', (remotePass) => {
