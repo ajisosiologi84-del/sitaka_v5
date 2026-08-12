@@ -280,7 +280,8 @@ export function syncStudentToGoogleSheets(
   const url = getAppsScriptUrl();
   if (!url) return;
   try {
-    fetch(url.trim(), {
+    const targetUrl = url.trim().includes('?') ? `${url.trim()}&action=${action}` : `${url.trim()}?action=${action}`;
+    fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
@@ -301,7 +302,8 @@ export function syncStudentBatchToGoogleSheets(students: Student[]): void {
   const url = getAppsScriptUrl();
   if (!url) return;
   try {
-    fetch(url.trim(), {
+    const targetUrl = url.trim().includes('?') ? `${url.trim()}&action=batchSave` : `${url.trim()}?action=batchSave`;
+    fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
@@ -323,12 +325,14 @@ export function syncLaptopToGoogleSheets(
   const url = getAppsScriptUrl();
   if (!url) return;
   try {
-    fetch(url.trim(), {
+    const actName = action === 'save' ? 'saveLaptop' : 'deleteLaptop';
+    const targetUrl = url.trim().includes('?') ? `${url.trim()}&action=${actName}` : `${url.trim()}?action=${actName}`;
+    fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         target: 'laptop',
-        action: action === 'save' ? 'saveLaptop' : 'deleteLaptop',
+        action: actName,
         laptop: action === 'save' ? laptop : undefined,
         id: id || (typeof laptop === 'string' ? laptop : laptop?.id),
         studentId: studentId || (typeof laptop === 'object' ? laptop?.studentId : undefined),
@@ -343,7 +347,8 @@ export function syncLaptopBatchToGoogleSheets(laptops: LaptopData[]): void {
   const url = getAppsScriptUrl();
   if (!url) return;
   try {
-    fetch(url.trim(), {
+    const targetUrl = url.trim().includes('?') ? `${url.trim()}&action=batchSave` : `${url.trim()}?action=batchSave`;
+    fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
@@ -364,12 +369,14 @@ export function syncProktorToGoogleSheets(
   const url = getAppsScriptUrl();
   if (!url) return;
   try {
-    fetch(url.trim(), {
+    const actName = action === 'save' ? 'saveProktor' : 'deleteProktor';
+    const targetUrl = url.trim().includes('?') ? `${url.trim()}&action=${actName}` : `${url.trim()}?action=${actName}`;
+    fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         target: 'proktor',
-        action: action === 'save' ? 'saveProktor' : 'deleteProktor',
+        action: actName,
         proktor: action === 'save' ? proktor : undefined,
         id: id || (typeof proktor === 'string' ? proktor : proktor?.id),
       }),
@@ -383,7 +390,8 @@ export function syncProktorBatchToGoogleSheets(proktorList: ProktorTeknisi[]): v
   const url = getAppsScriptUrl();
   if (!url) return;
   try {
-    fetch(url.trim(), {
+    const targetUrl = url.trim().includes('?') ? `${url.trim()}&action=batchSave` : `${url.trim()}?action=batchSave`;
+    fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
@@ -1104,7 +1112,9 @@ export function syncMasterStudentToGoogleSheets(
   const url = getAppsScriptUrl();
   if (!url) return;
   try {
-    fetch(url.trim(), {
+    const actName = action === 'save' ? 'saveMaster' : action === 'delete' ? 'deleteMaster' : action;
+    const targetUrl = url.trim().includes('?') ? `${url.trim()}&target=master&action=${actName}` : `${url.trim()}?target=master&action=${actName}`;
+    fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
@@ -1124,7 +1134,8 @@ export function syncMasterStudentsBatchToGoogleSheets(students: MasterSchoolStud
   const url = getAppsScriptUrl();
   if (!url) return;
   try {
-    fetch(url.trim(), {
+    const targetUrl = url.trim().includes('?') ? `${url.trim()}&action=batchSave` : `${url.trim()}?action=batchSave`;
+    fetch(targetUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({

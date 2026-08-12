@@ -461,6 +461,11 @@ function doGet(e) {
 
     var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : "getAll";
 
+    // Jika parameter GET membawa permintaan tulis/batch atau data payload, alihkan ke doPost
+    if (e && e.parameter && (e.parameter.payload || (action !== "getAll" && action !== "ping" && action !== "test" && action !== "getStatus"))) {
+      return doPost(e);
+    }
+
     if (action === "ping" || action === "test" || action === "getStatus") {
       var sRows = sheets.sheetStudents.getDataRange().getValues();
       var lRows = sheets.sheetLaptops.getDataRange().getValues();

@@ -90,27 +90,31 @@ export const AppsScriptView: React.FC = () => {
       let json: any = null;
       let isSuccess = false;
 
-      // Method 1: Try POST request with text/plain (avoids CORS preflight in browsers)
+      // Method 1: Try GET request with query params (most reliable across browsers & Vercel)
       try {
-        const postRes = await fetch(cleanUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'getAll' }),
-        });
-        json = await postRes.json();
-        if (json && json.status === 'success') {
+        const pingUrl = cleanUrl.includes('?')
+          ? `${cleanUrl}&action=ping&_t=${Date.now()}`
+          : `${cleanUrl}?action=ping&_t=${Date.now()}`;
+        const getRes = await fetch(pingUrl, { method: 'GET', redirect: 'follow' });
+        json = await getRes.json();
+        if (json && (json.status === 'success' || json.connected === true)) {
           isSuccess = true;
         }
-      } catch (_) {
-        // Fallback Method 2: Try GET request
+      } catch (getErr) {
+        console.warn('GET ping failed, trying POST:', getErr);
+        // Fallback Method 2: Try POST request with text/plain
         try {
-          const getRes = await fetch(cleanUrl, { method: 'GET' });
-          json = await getRes.json();
-          if (json && json.status === 'success') {
+          const postRes = await fetch(cleanUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'ping' }),
+          });
+          json = await postRes.json();
+          if (json && (json.status === 'success' || json.connected === true)) {
             isSuccess = true;
           }
-        } catch (getErr) {
-          console.warn('GET fallback failed:', getErr);
+        } catch (postErr) {
+          console.warn('POST ping failed:', postErr);
         }
       }
 

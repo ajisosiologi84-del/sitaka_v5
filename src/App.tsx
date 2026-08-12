@@ -113,17 +113,24 @@ export default function App() {
     try {
       let json: any = null;
       try {
-        // Try POST with action 'getAll' first (most compatible across browser CORS modes)
-        const postRes = await fetch(url.trim(), {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain' },
-          body: JSON.stringify({ action: 'getAll' }),
-        });
-        json = await postRes.json();
-      } catch (postErr) {
-        // Fallback to GET request
-        const getRes = await fetch(url.trim(), { method: 'GET' });
+        // Try GET request with action=getAll (most reliable across mobile browsers & Vercel)
+        const getUrl = url.trim().includes('?')
+          ? `${url.trim()}&action=getAll&_t=${Date.now()}`
+          : `${url.trim()}?action=getAll&_t=${Date.now()}`;
+        const getRes = await fetch(getUrl, { method: 'GET', redirect: 'follow' });
         json = await getRes.json();
+      } catch (getErr) {
+        // Fallback to POST request
+        try {
+          const postRes = await fetch(url.trim(), {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'getAll' }),
+          });
+          json = await postRes.json();
+        } catch (postErr) {
+          console.warn('Sync POST fallback failed:', postErr);
+        }
       }
 
       if (json && json.status === 'success') {
