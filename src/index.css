@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@media print {
+  /* Hide all elements on the page by default */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Make printable form container and all its children visible */
+  #printable-form-content,
+  #printable-form-content * {
+    visibility: visible !important;
+  }
+
+  /* Position printable form container to take up the full printed page cleanly */
+  #printable-form-content {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    border: none !important;
+    box-shadow: none !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page setup */
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+}
+

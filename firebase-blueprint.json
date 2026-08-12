@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "students": {
+      "title": "Students Data",
+      "description": "Data siswa, nilai TKA, dan pilihan program studi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nis": { "type": "string" },
+        "namaSiswa": { "type": "string" },
+        "kelas": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["nis", "namaSiswa"]
+    },
+    "laptops": {
+      "title": "Laptop Inventory Data",
+      "description": "Data inventaris laptop proktor dan ujian",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nomorUnit": { "type": "string" },
+        "status": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      }
+    },
+    "securityLogs": {
+      "title": "Security Audit Logs",
+      "description": "Catatan log audit keamanan dan riwayat aktivitas",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "role": { "type": "string" },
+        "action": { "type": "string" },
+        "status": { "type": "string" },
+        "details": { "type": "string" }
+      }
+    },
+    "systemSettings": {
+      "title": "System Configurations",
+      "description": "Pengaturan umum sistem, kop dokumen, dan password terenkripsi",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "passwords": { "type": "object" },
+        "docSettings": { "type": "object" },
+        "updatedAt": { "type": "string" }
+      }
+    }
+  }
+}

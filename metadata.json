@@ -1,0 +1,8 @@
+{
+  "name": "Remix SITAKA V5",
+  "description": "Aplikasi pendataan siswa untuk TKA dan pilihan Studi Lanjut dengan menu navigasi kiri, manajemen data siswa, statistik mapel/prodi, serta generator Google Apps Script.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
