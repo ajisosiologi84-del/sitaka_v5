@@ -89,19 +89,45 @@ export const AppsScriptView: React.FC = () => {
     try {
       let json: any = null;
       let isSuccess = false;
+      let rawText = '';
 
       // Method 1: Try GET request with query params (most reliable across browsers & Vercel)
       try {
         const pingUrl = cleanUrl.includes('?')
           ? `${cleanUrl}&action=ping&_t=${Date.now()}`
           : `${cleanUrl}?action=ping&_t=${Date.now()}`;
-        const getRes = await fetch(pingUrl, { method: 'GET', redirect: 'follow' });
-        json = await getRes.json();
-        if (json && (json.status === 'success' || json.connected === true)) {
-          isSuccess = true;
+        const getRes = await fetch(pingUrl, { method: 'GET', redirect: 'follow', cache: 'no-store' });
+        rawText = await getRes.text();
+
+        // Check if Google returned an HTML login/authorization page instead of JSON
+        if (rawText.includes('<!DOCTYPE') || rawText.includes('<html') || rawText.includes('Google Accounts') || rawText.includes('ServiceLogin')) {
+          setTestStatus({
+            type: 'error',
+            message:
+              '🔴 Otorisasi Google Terdeteksi!\n' +
+              'Google Apps Script menolak akses Vercel (https://sitaka-v5.vercel.app/) karena Otorisasi "Who has access" masih diset ke "Only myself".\n\n' +
+              'Langkah Perbaikan Wajib:\n' +
+              '1. Buka Apps Script Google Spreadsheet Anda.\n' +
+              '2. Klik Deploy > Manage deployments > Edit (Icon Pensil).\n' +
+              '3. Ubah "Who has access" (Siapa yang memiliki akses) menjadi "Anyone" (Siapa saja).\n' +
+              '4. Klik Deploy > New deployment > Wajib pilih "New version" (Versi Baru).',
+          });
+          return;
+        }
+
+        try {
+          json = JSON.parse(rawText);
+          if (json && (json.status === 'success' || json.connected === true)) {
+            isSuccess = true;
+          }
+        } catch (jsonErr) {
+          console.warn('GET ping returned non-JSON:', rawText.substring(0, 150));
         }
       } catch (getErr) {
         console.warn('GET ping failed, trying POST:', getErr);
+      }
+
+      if (!isSuccess) {
         // Fallback Method 2: Try POST request with text/plain
         try {
           const postRes = await fetch(cleanUrl, {
@@ -109,10 +135,29 @@ export const AppsScriptView: React.FC = () => {
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: 'ping' }),
           });
-          json = await postRes.json();
-          if (json && (json.status === 'success' || json.connected === true)) {
-            isSuccess = true;
+          const postText = await postRes.text();
+
+          if (postText.includes('<!DOCTYPE') || postText.includes('<html') || postText.includes('Google Accounts')) {
+            setTestStatus({
+              type: 'error',
+              message:
+                '🔴 Otorisasi Google Terdeteksi!\n' +
+                'Google Apps Script menolak akses Vercel (https://sitaka-v5.vercel.app/) karena Otorisasi "Who has access" masih diset ke "Only myself".\n\n' +
+                'Langkah Perbaikan Wajib:\n' +
+                '1. Buka Apps Script Google Spreadsheet Anda.\n' +
+                '2. Klik Deploy > Manage deployments > Edit (Icon Pensil).\n' +
+                '3. Ubah "Who has access" (Siapa yang memiliki akses) menjadi "Anyone" (Siapa saja).\n' +
+                '4. Klik Deploy > New deployment > Wajib pilih "New version" (Versi Baru).',
+            });
+            return;
           }
+
+          try {
+            json = JSON.parse(postText);
+            if (json && (json.status === 'success' || json.connected === true)) {
+              isSuccess = true;
+            }
+          } catch (_) {}
         } catch (postErr) {
           console.warn('POST ping failed:', postErr);
         }
@@ -131,17 +176,37 @@ export const AppsScriptView: React.FC = () => {
           message: `Respon dari Apps Script: ${json.message}`,
         });
       } else {
-        throw new Error('CORS_OR_AUTH_ERROR');
+        // Probe check with mode: 'no-cors' to check endpoint reachability vs CORS blocking
+        try {
+          const probe = await fetch(cleanUrl, { method: 'GET', mode: 'no-cors' });
+          if (probe) {
+            setTestStatus({
+              type: 'error',
+              message:
+                '⚠️ Endpoint Google Apps Script Aktif tapi Diblokir oleh Browser!\n\n' +
+                'Penyebab Utama & Solusi:\n' +
+                '1. "Who has access" belum diubah menjadi "Anyone" (Siapa saja) di Apps Script.\n' +
+                '2. Lupa membuat "New version" (Versi Baru) saat re-deploy di Apps Script.\n' +
+                '3. Salin ulang Kode Code.gs di bawah (pastikan menyalin seluruh kode).',
+            });
+            return;
+          }
+        } catch (_) {}
+
+        setTestStatus({
+          type: 'error',
+          message:
+            'Gagal terhubung dari Vercel (https://sitaka-v5.vercel.app/)!\n' +
+            '1. Salin ulang Kode Code.gs terbaru di bawah.\n' +
+            '2. Di Apps Script: Deploy > Manage deployments > Edit > Ubah "Who has access" ke "Anyone" (Siapa saja).\n' +
+            '3. Wajib pilih "New version" (Versi Baru) saat re-deploy.\n' +
+            '4. Pastikan URL Web App berakhiran /exec.',
+        });
       }
     } catch (error: any) {
       setTestStatus({
         type: 'error',
-        message:
-          'Gagal terhubung dari Vercel (https://sitaka-v5.vercel.app/) / Browser Lain!\n' +
-          '1. Salin ulang Kode Code.gs terbaru di bawah (termasuk fungsi doOptions untuk CORS).\n' +
-          '2. Di Apps Script: Deploy > Manage deployments > Edit > Ubah "Who has access" ke "Anyone" (Siapa saja).\n' +
-          '3. Wajib buat "New version" (Versi Baru) saat re-deploy di Apps Script.\n' +
-          '4. Pastikan menggunakan URL Web App berakhiran /exec.',
+        message: 'Gagal terhubung dari Vercel / Browser. Periksa koneksi internet dan pastikan URL Web App sudah dipublikasikan.',
       });
     }
   };

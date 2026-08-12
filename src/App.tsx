@@ -117,8 +117,11 @@ export default function App() {
         const getUrl = url.trim().includes('?')
           ? `${url.trim()}&action=getAll&_t=${Date.now()}`
           : `${url.trim()}?action=getAll&_t=${Date.now()}`;
-        const getRes = await fetch(getUrl, { method: 'GET', redirect: 'follow' });
-        json = await getRes.json();
+        const getRes = await fetch(getUrl, { method: 'GET', redirect: 'follow', cache: 'no-store' });
+        const text = await getRes.text();
+        if (!text.includes('<!DOCTYPE') && !text.includes('<html')) {
+          json = JSON.parse(text);
+        }
       } catch (getErr) {
         // Fallback to POST request
         try {
@@ -127,7 +130,10 @@ export default function App() {
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: 'getAll' }),
           });
-          json = await postRes.json();
+          const text = await postRes.text();
+          if (!text.includes('<!DOCTYPE') && !text.includes('<html')) {
+            json = JSON.parse(text);
+          }
         } catch (postErr) {
           console.warn('Sync POST fallback failed:', postErr);
         }
