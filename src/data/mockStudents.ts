@@ -654,11 +654,45 @@ function doPost(e) {
         contents = e.parameter || {};
       }
     } else if (e && e.parameter) {
-      contents = e.parameter;
+      contents = e.parameter || {};
     }
 
-    var action = contents.action || "save";
-    var target = contents.target || "student";
+    // Auto-parse payload if received as string
+    if (contents.payload) {
+      try {
+        var parsedPayload = typeof contents.payload === "string" ? JSON.parse(contents.payload) : contents.payload;
+        if (parsedPayload && typeof parsedPayload === "object") {
+          for (var pKey in parsedPayload) {
+            contents[pKey] = parsedPayload[pKey];
+          }
+        }
+      } catch (pErr) {}
+    }
+
+    // Auto-parse array properties if received as stringified JSON
+    var arrayKeys = ["students", "laptops", "proktorList", "masterStudents"];
+    for (var a = 0; a < arrayKeys.length; a++) {
+      var ak = arrayKeys[a];
+      if (contents[ak] && typeof contents[ak] === "string") {
+        try {
+          contents[ak] = JSON.parse(contents[ak]);
+        } catch (aErr) {}
+      }
+    }
+
+    // Auto-parse object properties if received as stringified JSON
+    var objectKeys = ["student", "laptop", "proktor", "data"];
+    for (var o = 0; o < objectKeys.length; o++) {
+      var ok = objectKeys[o];
+      if (contents[ok] && typeof contents[ok] === "string") {
+        try {
+          contents[ok] = JSON.parse(contents[ok]);
+        } catch (oErr) {}
+      }
+    }
+
+    var action = contents.action || (e && e.parameter && e.parameter.action) || "save";
+    var target = contents.target || (e && e.parameter && e.parameter.target) || "student";
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheets = setupAllSheets();
 
@@ -701,31 +735,38 @@ function doPost(e) {
       var countS = 0, countL = 0, countP = 0, countM = 0;
       if (Array.isArray(contents.students)) {
         contents.students.forEach(function(st) {
-          handleStudentPost(sheets.sheetStudents, "save", { student: st });
-          countS++;
+          if (st && typeof st === "object") {
+            handleStudentPost(sheets.sheetStudents, "save", { student: st });
+            countS++;
+          }
         });
       }
       if (Array.isArray(contents.laptops)) {
         contents.laptops.forEach(function(lp) {
-          handleLaptopPost(sheets.sheetLaptops, "saveLaptop", { laptop: lp });
-          countL++;
+          if (lp && typeof lp === "object") {
+            handleLaptopPost(sheets.sheetLaptops, "saveLaptop", { laptop: lp });
+            countL++;
+          }
         });
       }
       if (Array.isArray(contents.proktorList)) {
         contents.proktorList.forEach(function(pr) {
-          handleProktorPost(sheets.sheetProktor, "saveProktor", { proktor: pr });
-          countP++;
+          if (pr && typeof pr === "object") {
+            handleProktorPost(sheets.sheetProktor, "saveProktor", { proktor: pr });
+            countP++;
+          }
         });
       }
       if (Array.isArray(contents.masterStudents)) {
-        // Clear then save all for batch overrides to maintain perfect parity
-        const lastRow = sheets.sheetMaster.getLastRow();
+        var lastRow = sheets.sheetMaster.getLastRow();
         if (lastRow > 1) {
           sheets.sheetMaster.getRange(2, 1, lastRow - 1, sheets.sheetMaster.getLastColumn()).clearContent();
         }
         contents.masterStudents.forEach(function(ms) {
-          handleMasterPost(sheets.sheetMaster, "save", { student: ms });
-          countM++;
+          if (ms && typeof ms === "object") {
+            handleMasterPost(sheets.sheetMaster, "save", { student: ms });
+            countM++;
+          }
         });
       }
       return responseJSON({

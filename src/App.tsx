@@ -168,7 +168,7 @@ export default function App() {
               nis: s.nis ? String(s.nis).replace(/^'/, '').trim() : '',
               nisn: formatNisn(s.nisn),
             }));
-          saveStudents(cleanStudents);
+          saveStudents(cleanStudents, false);
           setStudents(cleanStudents);
         }
         return true;
@@ -287,13 +287,13 @@ export default function App() {
           (s: any) => s && s.id && !/^std-1[0-2][0-9]$/.test(s.id) && s.id !== 'std-101' && !isExcludedStudentName(s.namaSiswa)
         );
         setStudents(cleanRemote);
-        saveStudents(cleanRemote);
+        saveStudents(cleanRemote, false);
       } else {
         const cleanLocal = getStoredStudents().filter(
           (s) => s && s.id && !/^std-1[0-2][0-9]$/.test(s.id) && s.id !== 'std-101' && !isExcludedStudentName(s.namaSiswa)
         );
         setStudents(cleanLocal);
-        saveStudents(cleanLocal);
+        saveStudents(cleanLocal, false);
       }
     });
 
