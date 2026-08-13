@@ -985,7 +985,16 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'appscript' && userRole !== 'siswa' && <AppsScriptView />}
+          {activeTab === 'appscript' && userRole !== 'siswa' && (
+            <AppsScriptView
+              appsScriptUrl={appsScriptUrl}
+              onSaveAppsScriptUrl={(url) => {
+                saveAppsScriptUrl(url, true);
+                setAppsScriptUrl(url);
+              }}
+              onSyncGoogleSheets={syncFromGoogleSheets}
+            />
+          )}
 
           {activeTab === 'settings' && userRole !== 'siswa' && (
             <SettingsView

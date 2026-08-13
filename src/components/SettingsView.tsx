@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Settings,
   Building2,
@@ -77,6 +77,7 @@ import {
   getStoredStudents,
   saveStudents,
   saveAppsScriptUrl,
+  getAppsScriptUrl,
   sanitizeAppsScriptUrl,
   saveMasterSchoolStudents,
 } from '../utils/storage';
@@ -127,7 +128,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'kop' | 'proktor' | 'appscript' | 'database' | 'backup' | 'security' | 'auditlog'>('kop');
   const [settingsForm, setSettingsForm] = useState<DocumentSettings>({ ...docSettings });
-  const [gasUrlInput, setGasUrlInput] = useState(appsScriptUrl);
+  const [gasUrlInput, setGasUrlInput] = useState(appsScriptUrl || getAppsScriptUrl());
+
+  useEffect(() => {
+    if (appsScriptUrl) {
+      setGasUrlInput(appsScriptUrl);
+    }
+  }, [appsScriptUrl]);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [securityMessage, setSecurityMessage] = useState<string | null>(null);
   const [isSavingPassword, setIsSavingPassword] = useState(false);

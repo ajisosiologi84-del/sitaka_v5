@@ -16,21 +16,31 @@ import {
 import { GOOGLE_APPS_SCRIPT_CODE } from '../data/mockStudents';
 import { getAppsScriptUrl, saveAppsScriptUrl, sanitizeAppsScriptUrl } from '../utils/storage';
 
-export const AppsScriptView: React.FC = () => {
+interface AppsScriptViewProps {
+  appsScriptUrl?: string;
+  onSaveAppsScriptUrl?: (url: string) => void;
+  onSyncGoogleSheets?: () => Promise<boolean>;
+}
+
+export const AppsScriptView: React.FC<AppsScriptViewProps> = ({
+  appsScriptUrl = '',
+  onSaveAppsScriptUrl,
+  onSyncGoogleSheets,
+}) => {
   const [copied, setCopied] = useState(false);
-  const [gasUrlInput, setGasUrlInput] = useState(getAppsScriptUrl());
+  const [gasUrlInput, setGasUrlInput] = useState(appsScriptUrl || getAppsScriptUrl());
   const [testStatus, setTestStatus] = useState<{
     type: 'idle' | 'testing' | 'success' | 'error';
     message: string;
   }>({ type: 'idle', message: '' });
 
-  // Keep gasUrlInput updated if URL is synced from Cloud/Firestore or localStorage
+  // Keep gasUrlInput updated if URL is synced from Cloud/Firestore or props or localStorage
   useEffect(() => {
-    const currentStoredUrl = getAppsScriptUrl();
-    if (currentStoredUrl && currentStoredUrl !== gasUrlInput) {
-      setGasUrlInput(currentStoredUrl);
+    const activeUrl = appsScriptUrl || getAppsScriptUrl();
+    if (activeUrl) {
+      setGasUrlInput(activeUrl);
     }
-  }, []);
+  }, [appsScriptUrl]);
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(GOOGLE_APPS_SCRIPT_CODE);
@@ -49,6 +59,9 @@ export const AppsScriptView: React.FC = () => {
     const cleanUrl = sanitizeAppsScriptUrl(gasUrlInput);
     setGasUrlInput(cleanUrl);
     saveAppsScriptUrl(cleanUrl, true);
+    if (onSaveAppsScriptUrl) {
+      onSaveAppsScriptUrl(cleanUrl);
+    }
     setTestStatus({
       type: 'success',
       message: 'URL Google Apps Script berhasil dibersihkan, disimpan & disinkronkan ke Cloud (Firestore). URL ini otomatis terhubung untuk seluruh perangkat dan browser yang membuka https://sitaka-v5.vercel.app/.',

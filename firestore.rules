@@ -17,5 +17,9 @@ service cloud.firestore {
     match /systemSettings/{settingId} {
       allow read, write: if true;
     }
+
+    match /masterSchoolStudents/{masterId} {
+      allow read, write: if true;
+    }
   }
 }
