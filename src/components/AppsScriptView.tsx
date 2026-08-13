@@ -14,7 +14,7 @@ import {
   Download
 } from 'lucide-react';
 import { GOOGLE_APPS_SCRIPT_CODE } from '../data/mockStudents';
-import { getAppsScriptUrl, saveAppsScriptUrl } from '../utils/storage';
+import { getAppsScriptUrl, saveAppsScriptUrl, sanitizeAppsScriptUrl } from '../utils/storage';
 
 export const AppsScriptView: React.FC = () => {
   const [copied, setCopied] = useState(false);
@@ -46,11 +46,12 @@ export const AppsScriptView: React.FC = () => {
       });
       return;
     }
-    const cleanUrl = gasUrlInput.trim();
+    const cleanUrl = sanitizeAppsScriptUrl(gasUrlInput);
+    setGasUrlInput(cleanUrl);
     saveAppsScriptUrl(cleanUrl, true);
     setTestStatus({
       type: 'success',
-      message: 'URL Google Apps Script berhasil disimpan & disinkronkan ke Cloud (Firestore). URL ini otomatis terhubung untuk seluruh perangkat dan browser yang membuka https://sitaka-v5.vercel.app/.',
+      message: 'URL Google Apps Script berhasil dibersihkan, disimpan & disinkronkan ke Cloud (Firestore). URL ini otomatis terhubung untuk seluruh perangkat dan browser yang membuka https://sitaka-v5.vercel.app/.',
     });
   };
 
@@ -63,15 +64,8 @@ export const AppsScriptView: React.FC = () => {
       return;
     }
 
-    const cleanUrl = gasUrlInput.trim();
-
-    if (cleanUrl.includes('/dev')) {
-      setTestStatus({
-        type: 'error',
-        message: '⚠️ URL berakhiran /dev adalah URL Editor Tes. Mohon gunakan Web App URL yang berakhiran /exec dari menu Deploy > New Deployment.',
-      });
-      return;
-    }
+    const cleanUrl = sanitizeAppsScriptUrl(gasUrlInput);
+    setGasUrlInput(cleanUrl);
 
     if (!cleanUrl.startsWith('https://script.google.com/macros/s/')) {
       setTestStatus({

@@ -10,6 +10,7 @@ import {
   clearAllStudentsData,
   getAppsScriptUrl,
   saveAppsScriptUrl,
+  sanitizeAppsScriptUrl,
   getStoredLaptops,
   addLaptop,
   updateLaptop,
@@ -107,31 +108,36 @@ export default function App() {
   } | null>(null);
 
   const syncFromGoogleSheets = async (urlOverride?: string): Promise<boolean> => {
-    const url = urlOverride || appsScriptUrl || getAppsScriptUrl();
+    const rawUrl = urlOverride || appsScriptUrl || getAppsScriptUrl();
+    if (!rawUrl) return false;
+    const url = sanitizeAppsScriptUrl(rawUrl);
     if (!url) return false;
 
     try {
       let json: any = null;
+
+      // Method 1: Try GET request with action=getAll (most reliable across mobile browsers & Vercel)
       try {
-        // Try GET request with action=getAll (most reliable across mobile browsers & Vercel)
-        const getUrl = url.trim().includes('?')
-          ? `${url.trim()}&action=getAll&_t=${Date.now()}`
-          : `${url.trim()}?action=getAll&_t=${Date.now()}`;
+        const getUrl = `${url}?action=getAll&_t=${Date.now()}`;
         const getRes = await fetch(getUrl, { method: 'GET', redirect: 'follow', cache: 'no-store' });
         const text = await getRes.text();
-        if (!text.includes('<!DOCTYPE') && !text.includes('<html')) {
+        if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
           json = JSON.parse(text);
         }
       } catch (getErr) {
-        // Fallback to POST request
+        console.warn('Sync GET failed, trying POST fallback:', getErr);
+      }
+
+      // Method 2: Fallback to POST request if GET failed or returned non-JSON/HTML
+      if (!json || json.status !== 'success') {
         try {
-          const postRes = await fetch(url.trim(), {
+          const postRes = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: 'getAll' }),
           });
           const text = await postRes.text();
-          if (!text.includes('<!DOCTYPE') && !text.includes('<html')) {
+          if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
             json = JSON.parse(text);
           }
         } catch (postErr) {
@@ -161,7 +167,7 @@ export default function App() {
         if (studentData && Array.isArray(studentData)) {
           const cleanStudents = studentData
             .filter(
-              (s: any) => s && s.id && !/^std-1[0-2][0-9]$/.test(s.id) && s.id !== 'std-101'
+              (s: any) => s && s.id && !/^std-1[0-2][0-9]$/.test(s.id) && s.id !== 'std-101' && !isExcludedStudentName(s.namaSiswa)
             )
             .map((s: any) => ({
               ...s,

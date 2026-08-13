@@ -254,13 +254,31 @@ export function exportStudentsToCSV(students: Student[]): void {
   document.body.removeChild(link);
 }
 
+export function sanitizeAppsScriptUrl(url: string): string {
+  if (!url) return '';
+  let clean = url.trim();
+  if (clean.includes('?')) {
+    clean = clean.split('?')[0];
+  }
+  if (clean.endsWith('/dev')) {
+    clean = clean.slice(0, -4) + '/exec';
+  }
+  clean = clean.replace(/\/+$/, '');
+  return clean;
+}
+
 export function getAppsScriptUrl(): string {
-  return localStorage.getItem(GAS_URL_KEY) || '';
+  const raw = localStorage.getItem(GAS_URL_KEY) || '';
+  return sanitizeAppsScriptUrl(raw);
 }
 
 export function saveAppsScriptUrl(url: string, syncToCloud = true): void {
-  const cleanUrl = url.trim();
-  localStorage.setItem(GAS_URL_KEY, cleanUrl);
+  const cleanUrl = sanitizeAppsScriptUrl(url);
+  if (cleanUrl) {
+    localStorage.setItem(GAS_URL_KEY, cleanUrl);
+  } else {
+    localStorage.removeItem(GAS_URL_KEY);
+  }
   if (syncToCloud) {
     syncSystemSettingsToFirestore('appsScriptUrl', cleanUrl);
   }
