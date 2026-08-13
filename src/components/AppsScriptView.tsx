@@ -83,18 +83,14 @@ export const AppsScriptView: React.FC = () => {
     try {
       let json: any = null;
       let isSuccess = false;
-      let rawText = '';
 
-      // Method 1: Try GET request with query params (most reliable across browsers & Vercel)
+      // Method 1: Try GET request with action=ping
       try {
-        const pingUrl = cleanUrl.includes('?')
-          ? `${cleanUrl}&action=ping&_t=${Date.now()}`
-          : `${cleanUrl}?action=ping&_t=${Date.now()}`;
+        const pingUrl = `${cleanUrl}?action=ping&_t=${Date.now()}`;
         const getRes = await fetch(pingUrl, { method: 'GET', redirect: 'follow', cache: 'no-store' });
-        rawText = await getRes.text();
+        const text = await getRes.text();
 
-        // Check if Google returned an HTML login/authorization page instead of JSON
-        if (rawText.includes('<!DOCTYPE') || rawText.includes('<html') || rawText.includes('Google Accounts') || rawText.includes('ServiceLogin')) {
+        if (text && (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('Google Accounts') || text.includes('ServiceLogin'))) {
           setTestStatus({
             type: 'error',
             message:
@@ -104,34 +100,47 @@ export const AppsScriptView: React.FC = () => {
               '1. Buka Apps Script Google Spreadsheet Anda.\n' +
               '2. Klik Deploy > Manage deployments > Edit (Icon Pensil).\n' +
               '3. Ubah "Who has access" (Siapa yang memiliki akses) menjadi "Anyone" (Siapa saja).\n' +
-              '4. Klik Deploy > New deployment > Wajib pilih "New version" (Versi Baru).',
+              '4. Pada bagian Version, WAJIB pilih "New version" (Versi Baru) lalu klik Deploy.',
           });
           return;
         }
 
-        try {
-          json = JSON.parse(rawText);
-          if (json && (json.status === 'success' || json.connected === true)) {
-            isSuccess = true;
-          }
-        } catch (jsonErr) {
-          console.warn('GET ping returned non-JSON:', rawText.substring(0, 150));
+        if (text) {
+          try {
+            json = JSON.parse(text);
+          } catch (_) {}
         }
       } catch (getErr) {
-        console.warn('GET ping failed, trying POST:', getErr);
+        console.warn('GET ping attempt failed:', getErr);
       }
 
-      if (!isSuccess) {
-        // Fallback Method 2: Try POST request with text/plain
+      // Method 2: Try GET request without action parameter (plain getAll) if Method 1 failed
+      if (!json) {
+        try {
+          const getUrl = `${cleanUrl}?_t=${Date.now()}`;
+          const getRes = await fetch(getUrl, { method: 'GET', redirect: 'follow', cache: 'no-store' });
+          const text = await getRes.text();
+          if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
+            try {
+              json = JSON.parse(text);
+            } catch (_) {}
+          }
+        } catch (get2Err) {
+          console.warn('GET getAll attempt failed:', get2Err);
+        }
+      }
+
+      // Method 3: Fallback to POST request if GET attempts failed
+      if (!json) {
         try {
           const postRes = await fetch(cleanUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ action: 'ping' }),
           });
-          const postText = await postRes.text();
+          const text = await postRes.text();
 
-          if (postText.includes('<!DOCTYPE') || postText.includes('<html') || postText.includes('Google Accounts')) {
+          if (text && (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('Google Accounts'))) {
             setTestStatus({
               type: 'error',
               message:
@@ -141,25 +150,40 @@ export const AppsScriptView: React.FC = () => {
                 '1. Buka Apps Script Google Spreadsheet Anda.\n' +
                 '2. Klik Deploy > Manage deployments > Edit (Icon Pensil).\n' +
                 '3. Ubah "Who has access" (Siapa yang memiliki akses) menjadi "Anyone" (Siapa saja).\n' +
-                '4. Klik Deploy > New deployment > Wajib pilih "New version" (Versi Baru).',
+                '4. Pada bagian Version, WAJIB pilih "New version" (Versi Baru) lalu klik Deploy.',
             });
             return;
           }
 
-          try {
-            json = JSON.parse(postText);
-            if (json && (json.status === 'success' || json.connected === true)) {
-              isSuccess = true;
-            }
-          } catch (_) {}
+          if (text) {
+            try {
+              json = JSON.parse(text);
+            } catch (_) {}
+          }
         } catch (postErr) {
-          console.warn('POST ping failed:', postErr);
+          console.warn('POST ping attempt failed:', postErr);
+        }
+      }
+
+      // Evaluate JSON response
+      if (json) {
+        if (
+          json.status === 'success' ||
+          json.connected === true ||
+          Array.isArray(json.students) ||
+          Array.isArray(json.data) ||
+          json.totalRows !== undefined
+        ) {
+          isSuccess = true;
         }
       }
 
       if (isSuccess && json) {
         saveAppsScriptUrl(cleanUrl, true);
-        const totalRows = (json.students?.length || 0) + (json.laptops?.length || 0) + (json.masterStudents?.length || 0);
+        const totalRows =
+          json.totalRows !== undefined
+            ? json.totalRows
+            : (json.students?.length || json.data?.length || 0) + (json.laptops?.length || 0) + (json.masterStudents?.length || 0);
         setTestStatus({
           type: 'success',
           message: `Koneksi Berhasil! Google Sheet terhubung sempurna (${totalRows} total data terdeteksi). URL telah disinkronkan ke Cloud untuk semua perangkat (termasuk Vercel https://sitaka-v5.vercel.app/).`,
@@ -170,31 +194,17 @@ export const AppsScriptView: React.FC = () => {
           message: `Respon dari Apps Script: ${json.message}`,
         });
       } else {
-        // Probe check with mode: 'no-cors' to check endpoint reachability vs CORS blocking
-        try {
-          const probe = await fetch(cleanUrl, { method: 'GET', mode: 'no-cors' });
-          if (probe) {
-            setTestStatus({
-              type: 'error',
-              message:
-                '⚠️ Endpoint Google Apps Script Aktif tapi Diblokir oleh Browser!\n\n' +
-                'Penyebab Utama & Solusi:\n' +
-                '1. "Who has access" belum diubah menjadi "Anyone" (Siapa saja) di Apps Script.\n' +
-                '2. Lupa membuat "New version" (Versi Baru) saat re-deploy di Apps Script.\n' +
-                '3. Salin ulang Kode Code.gs di bawah (pastikan menyalin seluruh kode).',
-            });
-            return;
-          }
-        } catch (_) {}
-
         setTestStatus({
           type: 'error',
           message:
-            'Gagal terhubung dari Vercel (https://sitaka-v5.vercel.app/)!\n' +
-            '1. Salin ulang Kode Code.gs terbaru di bawah.\n' +
-            '2. Di Apps Script: Deploy > Manage deployments > Edit > Ubah "Who has access" ke "Anyone" (Siapa saja).\n' +
-            '3. Wajib pilih "New version" (Versi Baru) saat re-deploy.\n' +
-            '4. Pastikan URL Web App berakhiran /exec.',
+            'Gagal terhubung dari Vercel (https://sitaka-v5.vercel.app/)!\n\n' +
+            'Langkah Verifikasi Apps Script:\n' +
+            '1. Salin ulang Kode Code.gs terbaru dari tombol di bawah.\n' +
+            '2. Tempelkan ke Apps Script Google Sheets Anda.\n' +
+            '3. Di Apps Script: Deploy > Manage deployments > Edit (Ikon Pensil).\n' +
+            '4. Pastikan "Who has access" diubah menjadi "Anyone" (Siapa saja).\n' +
+            '5. Pada bagian Version, WAJIB pilih "New version" (Versi Baru) lalu klik Deploy.\n' +
+            '6. Salin ulang Web App URL berakhiran /exec dan simpan di kolom atas.',
         });
       }
     } catch (error: any) {

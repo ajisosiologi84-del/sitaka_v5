@@ -257,13 +257,23 @@ export function exportStudentsToCSV(students: Student[]): void {
 export function sanitizeAppsScriptUrl(url: string): string {
   if (!url) return '';
   let clean = url.trim();
+  // Strip query parameters
   if (clean.includes('?')) {
     clean = clean.split('?')[0];
   }
+  // Strip trailing slashes
+  clean = clean.replace(/\/+$/, '');
+
+  // If ends with /dev, replace with /exec
   if (clean.endsWith('/dev')) {
     clean = clean.slice(0, -4) + '/exec';
   }
-  clean = clean.replace(/\/+$/, '');
+
+  // If starts with script.google.com and doesn't end with /exec, append /exec
+  if (clean.includes('script.google.com') && !clean.endsWith('/exec')) {
+    clean = clean + '/exec';
+  }
+
   return clean;
 }
 

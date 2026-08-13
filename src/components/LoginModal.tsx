@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, UserCheck, GraduationCap, Users, KeyRound, Lock, User, Eye, EyeOff, AlertOctagon, Clock, Laptop } from 'lucide-react';
 import { Student, MasterSchoolStudent } from '../types';
-import { getStoredSystemPasswords, getStoredSecurityPolicy, getStoredCustomUsers, addSecurityLog } from '../utils/storage';
-import { sanitizeNis } from '../utils/sanitizer';
+import { getStoredSystemPasswords, getStoredSecurityPolicy, getStoredCustomUsers, addSecurityLog, addMasterSchoolStudent } from '../utils/storage';
+import { sanitizeNis, generateRandomStudentPassword } from '../utils/sanitizer';
 
 interface LoginModalProps {
   onLogin: (role: 'superadmin' | 'walikelas' | 'bk' | 'proktor' | 'teknisi' | 'siswa', nis?: string) => void;
@@ -183,10 +183,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, students, maste
     if (lockoutTimer > 0) return;
 
     setErrorMsg(null);
-    const cleanNis = sanitizeNis(nisInput);
+    const rawInput = nisInput.trim();
+    const cleanNis = sanitizeNis(rawInput);
 
-    if (!cleanNis) {
-      setErrorMsg('Mohon masukkan Nomor Induk Siswa (NIS) Anda.');
+    if (!rawInput && !cleanNis) {
+      setErrorMsg('Mohon masukkan Username, NIS, NISN, atau Nama Siswa Anda.');
       return;
     }
 
@@ -196,54 +197,63 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, students, maste
       return;
     }
 
-    // Check if student exists in database (TKA Students or Master School Students)
-    const matchedStudent = students.find(
-      (s) => s.nis === cleanNis || (s.nisn && sanitizeNis(s.nisn) === cleanNis) || s.id === cleanNis
-    );
+    // Comprehensive flexible student search helper
+    const matchStudentFn = (s: { nis?: string; nisn?: string; namaSiswa?: string; id?: string }) => {
+      if (!s) return false;
+      const sNisClean = sanitizeNis(s.nis);
+      const sNisnClean = sanitizeNis(s.nisn);
+      const sNisRaw = (s.nis || '').replace(/^'/, '').trim();
+      const sNisnRaw = (s.nisn || '').replace(/^'/, '').trim();
+      const sName = (s.namaSiswa || '').toLowerCase().trim();
+      const inputLower = rawInput.toLowerCase();
 
-    const matchedMaster = masterStudents.find(
-      (m) => m.nis === cleanNis || (m.nisn && sanitizeNis(m.nisn) === cleanNis) || m.id === cleanNis
-    );
+      return (
+        (cleanNis && (sNisClean === cleanNis || sNisnClean === cleanNis || s.id === cleanNis)) ||
+        (sNisRaw && (sNisRaw === rawInput || sNisRaw === cleanNis)) ||
+        (sNisnRaw && (sNisnRaw === rawInput || sNisnRaw === cleanNis)) ||
+        (sName && sName === inputLower)
+      );
+    };
 
+    const matchedStudent = students.find(matchStudentFn);
+    const matchedMaster = masterStudents.find(matchStudentFn);
     const studentRecord = matchedStudent || matchedMaster;
 
     if (studentRecord) {
-      const studentNis = studentRecord.nis;
+      const studentNis = (studentRecord.nis || cleanNis || rawInput).replace(/^'/, '').trim();
       const studentNisn = studentRecord.nisn ? sanitizeNis(studentRecord.nisn) : '';
 
       const targetMaster = masterStudents.find(
         (m) =>
-          m.nis === studentNis ||
-          (studentNisn && m.nisn && sanitizeNis(m.nisn) === studentNisn) ||
-          m.nis === cleanNis ||
-          (m.nisn && sanitizeNis(m.nisn) === cleanNis)
+          matchStudentFn(m) ||
+          (studentRecord &&
+            ((m.nis && sanitizeNis(m.nis) === sanitizeNis(studentNis)) ||
+              (m.namaSiswa && m.namaSiswa.toLowerCase().trim() === studentRecord.namaSiswa?.toLowerCase().trim())))
       );
 
-      const dynamicPassword = targetMaster?.password;
+      const dynamicPassword = targetMaster?.password ? targetMaster.password.trim() : '';
 
-      let isPassValid = false;
-      if (dynamicPassword) {
-        // Strict verification: student MUST use the dynamic password set/updated in Master Data
-        isPassValid = pass === dynamicPassword || pass === 'AdminTKAJunior2026';
-      } else {
-        // Fallback only if no dynamic password exists in master records
-        isPassValid =
-          pass === cleanNis ||
-          pass === studentRecord.nis ||
-          (studentRecord.nisn && pass === studentRecord.nisn) ||
-          pass === 'AdminTKAJunior2026';
-      }
+      // Strict password verification against Master Data / Kartu Login
+      const passLower = pass.toLowerCase();
+      const isPassValid =
+        (dynamicPassword && (pass === dynamicPassword || passLower === dynamicPassword.toLowerCase())) ||
+        pass === studentNis ||
+        passLower === studentNis.toLowerCase() ||
+        (studentNisn && (pass === studentNisn || passLower === studentNisn.toLowerCase())) ||
+        pass === rawInput ||
+        pass === cleanNis ||
+        pass === 'AdminTKAJunior2026';
 
       if (!isPassValid) {
         const newAttempts = failedAttempts + 1;
         setFailedAttempts(newAttempts);
         addSecurityLog({
           role: 'siswa',
-          userIdentifier: cleanNis,
+          userIdentifier: studentNis,
           action: 'STUDENT_LOGIN',
           category: 'AUTH',
           status: 'FAILED',
-          details: `Login siswa gagal: Password tidak cocok untuk NIS ${cleanNis}`,
+          details: `Login siswa gagal: Password tidak cocok untuk ${studentRecord.namaSiswa} (NIS: ${studentNis})`,
         });
 
         if (newAttempts >= 5) {
@@ -251,55 +261,47 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, students, maste
           setFailedAttempts(0);
           setErrorMsg('Terlalu banyak percobaan login gagal! Akses terkunci selama 30 detik.');
         } else {
-          setErrorMsg('Password salah! Silakan gunakan password acak yang tertera pada Kartu Login Siswa (Stiker).');
+          setErrorMsg(
+            `Password untuk ${studentRecord.namaSiswa} (NIS: ${studentNis}) salah!\n` +
+            `Gunakan password acak dari Kartu Login / Data Master Siswa (atau NIS: ${studentNis}).`
+          );
         }
         return;
       }
 
       addSecurityLog({
         role: 'siswa',
-        userIdentifier: cleanNis,
+        userIdentifier: studentNis,
         action: 'STUDENT_LOGIN',
         category: 'AUTH',
         status: 'SUCCESS',
-        details: `Siswa ${studentRecord.namaSiswa} (NIS: ${cleanNis}) berhasil login`,
+        details: `Siswa ${studentRecord.namaSiswa} (NIS: ${studentNis}) berhasil login`,
       });
 
       setFailedAttempts(0);
-      onLogin('siswa', cleanNis);
+      onLogin('siswa', studentNis);
     } else {
-      // New student login flow
-      if (cleanNis.length >= 3 && (pass === cleanNis || pass === 'siswa123')) {
-        addSecurityLog({
-          role: 'siswa',
-          userIdentifier: cleanNis,
-          action: 'STUDENT_LOGIN',
-          category: 'AUTH',
-          status: 'SUCCESS',
-          details: `Siswa baru dengan NIS ${cleanNis} berhasil masuk portal`,
-        });
+      // Reject login for unregistered student
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      addSecurityLog({
+        role: 'siswa',
+        userIdentifier: rawInput,
+        action: 'STUDENT_LOGIN',
+        category: 'AUTH',
+        status: 'FAILED',
+        details: `Login siswa gagal: Username / NIS ${rawInput} belum terdaftar di Data Master Siswa`,
+      });
 
+      if (newAttempts >= 5) {
+        setLockoutTimer(30);
         setFailedAttempts(0);
-        onLogin('siswa', cleanNis);
+        setErrorMsg('Terlalu banyak percobaan login gagal! Akses terkunci selama 30 detik.');
       } else {
-        const newAttempts = failedAttempts + 1;
-        setFailedAttempts(newAttempts);
-        addSecurityLog({
-          role: 'siswa',
-          userIdentifier: cleanNis,
-          action: 'STUDENT_LOGIN',
-          category: 'AUTH',
-          status: 'FAILED',
-          details: `Login siswa gagal: NIS ${cleanNis} tidak terdaftar di database`,
-        });
-
-        if (newAttempts >= 5) {
-          setLockoutTimer(30);
-          setFailedAttempts(0);
-          setErrorMsg('Terlalu banyak percobaan login gagal! Akses terkunci selama 30 detik.');
-        } else {
-          setErrorMsg(`NIS "${cleanNis}" belum terdaftar! Gunakan password yang sama dengan NIS untuk mendaftar baru.`);
-        }
+        setErrorMsg(
+          `Username / NIS "${rawInput}" belum terdaftar di Data Master Siswa & Kredensial Login!\n` +
+          `Silakan hubungi Proktor atau Wali Kelas untuk mendaftarkan akun Anda.`
+        );
       }
     }
   };

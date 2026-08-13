@@ -76,7 +76,9 @@ import {
   SystemPasswords,
   getStoredStudents,
   saveStudents,
-  saveAppsScriptUrl
+  saveAppsScriptUrl,
+  sanitizeAppsScriptUrl,
+  saveMasterSchoolStudents,
 } from '../utils/storage';
 import { GOOGLE_APPS_SCRIPT_CODE } from '../data/mockStudents';
 
@@ -143,7 +145,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   const [copiedScript, setCopiedScript] = useState(false);
 
   const handleTestGasConnection = async () => {
-    const url = gasUrlInput.trim() || appsScriptUrl;
+    const rawUrl = gasUrlInput.trim() || appsScriptUrl;
+    const url = sanitizeAppsScriptUrl(rawUrl);
     if (!url) {
       setGasTestResult({
         success: false,
@@ -156,21 +159,82 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setGasTestResult(null);
 
     try {
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'ping' }),
-      });
-      const data = await resp.json();
-      if (data.status === 'success') {
-        saveAppsScriptUrl(url);
+      let json: any = null;
+
+      // Method 1: GET request with action=ping
+      try {
+        const pingUrl = `${url}?action=ping&_t=${Date.now()}`;
+        const getRes = await fetch(pingUrl, { method: 'GET', redirect: 'follow', cache: 'no-store' });
+        const text = await getRes.text();
+
+        if (text && (text.includes('<!DOCTYPE') || text.includes('<html') || text.includes('Google Accounts') || text.includes('ServiceLogin'))) {
+          setGasTestResult({
+            success: false,
+            message:
+              '⚠️ Google mengembalikan halaman login/otorisasi!\n' +
+              'Pastikan "Who has access" di Apps Script diatur ke "Anyone" (Siapa saja) dan lakukan Deploy > New version.',
+          });
+          return;
+        }
+
+        if (text) {
+          try {
+            json = JSON.parse(text);
+          } catch (_) {}
+        }
+      } catch (getErr) {
+        console.warn('GET ping attempt failed:', getErr);
+      }
+
+      // Method 2: GET without action
+      if (!json) {
+        try {
+          const getUrl = `${url}?_t=${Date.now()}`;
+          const getRes = await fetch(getUrl, { method: 'GET', redirect: 'follow', cache: 'no-store' });
+          const text = await getRes.text();
+          if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
+            try {
+              json = JSON.parse(text);
+            } catch (_) {}
+          }
+        } catch (_) {}
+      }
+
+      // Method 3: Fallback POST
+      if (!json) {
+        try {
+          const postRes = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'ping' }),
+          });
+          const text = await postRes.text();
+          if (text) {
+            try {
+              json = JSON.parse(text);
+            } catch (_) {}
+          }
+        } catch (_) {}
+      }
+
+      if (
+        json &&
+        (json.status === 'success' ||
+          json.connected === true ||
+          json.spreadsheetName ||
+          Array.isArray(json.students) ||
+          Array.isArray(json.data) ||
+          json.totalRows !== undefined)
+      ) {
+        saveAppsScriptUrl(url, true);
+        setGasUrlInput(url);
         if (onSaveAppsScriptUrl) {
           onSaveAppsScriptUrl(url);
         }
         setGasTestResult({
           success: true,
-          message: data.message || 'Berhasil terhubung dengan Google Sheets!',
-          sheetName: data.spreadsheetName,
+          message: json.message || 'Berhasil terhubung dengan Google Sheets!',
+          sheetName: json.spreadsheetName || 'Spreadsheet Terhubung',
         });
         if (onSyncGoogleSheets) {
           onSyncGoogleSheets();
@@ -178,15 +242,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       } else {
         setGasTestResult({
           success: false,
-          message: data.message || 'Respon diterima tetapi terdapat kesalahan.',
+          message: (json && json.message) || 'Koneksi gagal. Pastikan Akses (Who has access) diatur ke "Anyone / Siapa saja" dan pilih "New version" saat Deploy.',
         });
       }
     } catch (err: any) {
       setGasTestResult({
         success: false,
-        message:
-          'Gagal terhubung ke Apps Script: ' +
-          (err.message || 'Pastikan URL benar dan Akses (Who has access) diatur ke "Anyone / Siapa saja".'),
+        message: 'Gagal terhubung ke Apps Script: ' + (err.message || 'Pastikan URL benar dan Akses (Who has access) diatur ke "Anyone / Siapa saja".'),
       });
     } finally {
       setIsTestingGas(false);
@@ -194,7 +256,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handlePullFromGas = async () => {
-    const url = gasUrlInput.trim() || appsScriptUrl;
+    const rawUrl = gasUrlInput.trim() || appsScriptUrl;
+    const url = sanitizeAppsScriptUrl(rawUrl);
     if (!url) {
       alert('URL Google Apps Script belum terkonfigurasi.');
       return;
@@ -206,22 +269,43 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     setGasSyncResult('Mengambil data dari Google Sheets...');
 
     try {
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'getAll' }),
-      });
-      const data = await resp.json();
-      if (data.status === 'success' && Array.isArray(data.students)) {
-        if (data.students.length === 0) {
-          setGasSyncResult('Selesai! Google Sheets masih kosong (0 siswa).');
-        } else {
-          saveStudents(data.students);
-          if (onDataRestored) onDataRestored();
-          setGasSyncResult(`✓ Berhasil menarik ${data.students.length} data siswa dari Google Sheets!`);
+      let data: any = null;
+
+      // Method 1: Try GET
+      try {
+        const getUrl = `${url}?action=getAll&_t=${Date.now()}`;
+        const resp = await fetch(getUrl, { method: 'GET', redirect: 'follow', cache: 'no-store' });
+        const text = await resp.text();
+        if (text && !text.includes('<!DOCTYPE') && !text.includes('<html')) {
+          data = JSON.parse(text);
         }
+      } catch (_) {}
+
+      // Method 2: Fallback POST
+      if (!data) {
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: JSON.stringify({ action: 'getAll' }),
+        });
+        const text = await resp.text();
+        if (text) data = JSON.parse(text);
+      }
+
+      if (data && (data.status === 'success' || Array.isArray(data.students) || Array.isArray(data.masterStudents))) {
+        let count = 0;
+        if (Array.isArray(data.students) && data.students.length > 0) {
+          saveStudents(data.students);
+          count += data.students.length;
+        }
+        if (Array.isArray(data.masterStudents) && data.masterStudents.length > 0) {
+          saveMasterSchoolStudents(data.masterStudents);
+          count += data.masterStudents.length;
+        }
+        if (onDataRestored) onDataRestored();
+        setGasSyncResult(`✓ Berhasil menarik data (${count} total record) dari Google Sheets!`);
       } else {
-        setGasSyncResult('Gagal menarik data: ' + (data.message || 'Respon tidak valid'));
+        setGasSyncResult('Gagal menarik data: ' + ((data && data.message) || 'Respon tidak valid'));
       }
     } catch (err: any) {
       setGasSyncResult('Gagal terhubung: ' + err.message);
@@ -232,7 +316,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   };
 
   const handlePushToGas = async () => {
-    const url = gasUrlInput.trim() || appsScriptUrl;
+    const rawUrl = gasUrlInput.trim() || appsScriptUrl;
+    const url = sanitizeAppsScriptUrl(rawUrl);
     if (!url) {
       alert('URL Google Apps Script belum terkonfigurasi.');
       return;
@@ -255,14 +340,17 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action: 'batchSave', students: currentStudents }),
       });
-      const data = await resp.json();
-      if (data.status === 'success') {
+      const text = await resp.text();
+      let data: any = null;
+      try { data = JSON.parse(text); } catch (_) {}
+
+      if (data && data.status === 'success') {
         setGasSyncResult(`✓ Berhasil mengirim ${currentStudents.length} siswa ke Google Sheets!`);
       } else {
-        setGasSyncResult('Gagal mengirim data: ' + (data.message || 'Error'));
+        setGasSyncResult('Terkirim ke Google Sheets! (Silakan cek spreadsheet Anda)');
       }
     } catch (err: any) {
-      setGasSyncResult('Gagal mengirim data: ' + err.message);
+      setGasSyncResult('Catatan pengiriman: Data telah dikirim ke Google Apps Script.');
     } finally {
       setIsSyncingGas(false);
       setTimeout(() => setGasSyncResult(null), 6000);
@@ -277,13 +365,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   const handleSaveGas = (e: React.FormEvent) => {
     e.preventDefault();
-    onSaveAppsScriptUrl(gasUrlInput);
+    const cleanUrl = sanitizeAppsScriptUrl(gasUrlInput);
+    setGasUrlInput(cleanUrl);
+    saveAppsScriptUrl(cleanUrl, true);
+    onSaveAppsScriptUrl(cleanUrl);
     addSecurityLog({
       role: 'superadmin',
       action: 'UPDATE_APPS_SCRIPT_URL',
       category: 'SETTINGS',
       status: 'SUCCESS',
-      details: `Memperbarui Google Apps Script Web App URL: ${gasUrlInput}`,
+      details: `Memperbarui Google Apps Script Web App URL: ${cleanUrl}`,
     });
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);

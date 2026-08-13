@@ -37,7 +37,7 @@ import {
   getStoredMasterSchoolStudents,
   saveMasterSchoolStudents,
 } from './utils/storage';
-import { formatNisn } from './utils/sanitizer';
+import { formatNisn, sanitizeNis } from './utils/sanitizer';
 import {
   subscribeStudentsFromFirestore,
   subscribeLaptopsFromFirestore,
@@ -400,12 +400,32 @@ export default function App() {
 
     if (role === 'siswa' && nis) {
       setCurrentUserNis(nis);
+      const cleanTargetNis = formatNisn(nis) || sanitizeNis(nis) || nis.trim();
       const list = getStoredStudents();
-      const found = list.find((s) => s.nis === nis || (s.nisn && s.nisn === nis));
+
+      const isMatch = (item: { nis?: string; nisn?: string; namaSiswa?: string; id?: string }) => {
+        if (!item) return false;
+        const itemNisClean = sanitizeNis(item.nis);
+        const itemNisnClean = sanitizeNis(item.nisn);
+        const itemNisRaw = (item.nis || '').replace(/^'/, '').trim();
+        const itemNisnRaw = (item.nisn || '').replace(/^'/, '').trim();
+        const inputRaw = nis.trim();
+
+        return (
+          itemNisClean === cleanTargetNis ||
+          itemNisnClean === cleanTargetNis ||
+          itemNisRaw === inputRaw ||
+          itemNisnRaw === inputRaw ||
+          item.id === cleanTargetNis ||
+          (item.namaSiswa && item.namaSiswa.toLowerCase().trim() === inputRaw.toLowerCase())
+        );
+      };
+
+      const found = list.find(isMatch);
       if (found) {
         setEditingStudent(found);
       } else {
-        const masterFound = masterSchoolStudents.find((m) => m.nis === nis || (m.nisn && m.nisn === nis));
+        const masterFound = masterSchoolStudents.find(isMatch);
         if (masterFound) {
           setEditingStudent({
             id: '',
