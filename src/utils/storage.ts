@@ -268,7 +268,8 @@ export function sanitizeAppsScriptUrl(url: string): string {
 }
 
 export function getAppsScriptUrl(): string {
-  const raw = localStorage.getItem(GAS_URL_KEY) || '';
+  const envUrl = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_APPS_SCRIPT_URL : '';
+  const raw = localStorage.getItem(GAS_URL_KEY) || envUrl || '';
   return sanitizeAppsScriptUrl(raw);
 }
 
