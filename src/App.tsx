@@ -967,6 +967,7 @@ export default function App() {
           {activeTab === 'laptop' && userRole !== 'siswa' && (
             <LaptopInventoryView
               students={students}
+              masterStudents={masterSchoolStudents}
               laptops={laptops}
               proktorList={proktorList}
               docSettings={docSettings}

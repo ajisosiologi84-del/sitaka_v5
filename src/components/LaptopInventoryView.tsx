@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import {
   Student,
+  MasterSchoolStudent,
   LaptopData,
   ProktorTeknisi,
   DocumentSettings,
@@ -75,6 +76,7 @@ const SimpleBarcode: React.FC<{ value: string; height?: number }> = ({ value, he
 
 interface LaptopInventoryViewProps {
   students: Student[];
+  masterStudents?: MasterSchoolStudent[];
   laptops: LaptopData[];
   proktorList: ProktorTeknisi[];
   docSettings: DocumentSettings;
@@ -94,6 +96,7 @@ interface LaptopInventoryViewProps {
 
 export const LaptopInventoryView: React.FC<LaptopInventoryViewProps> = ({
   students,
+  masterStudents = [],
   laptops,
   proktorList,
   docSettings,
@@ -248,9 +251,92 @@ export const LaptopInventoryView: React.FC<LaptopInventoryViewProps> = ({
     setIsLaptopModalOpen(true);
   };
 
-  // Auto pick student details
+  // Combine TKA students and Master School students into a single deduplicated list
+  const combinedStudentOptions = React.useMemo(() => {
+    const list: Array<{
+      id: string;
+      namaSiswa: string;
+      kelas: string;
+      nis?: string;
+      nisn?: string;
+      source: 'tka' | 'master';
+    }> = [];
+
+    const seenKeys = new Set<string>();
+
+    // 1. Add TKA Students first
+    students.forEach((s) => {
+      const key = `${s.namaSiswa.trim().toLowerCase()}-${(s.kelas || '').trim().toLowerCase()}`;
+      seenKeys.add(key);
+      if (s.nis) seenKeys.add(`nis-${s.nis}`);
+      if (s.nisn) seenKeys.add(`nisn-${s.nisn}`);
+
+      list.push({
+        id: s.id,
+        namaSiswa: s.namaSiswa,
+        kelas: s.kelas,
+        nis: s.nis,
+        nisn: s.nisn,
+        source: 'tka',
+      });
+    });
+
+    // 2. Add Master School Students if not already present
+    if (masterStudents && masterStudents.length > 0) {
+      masterStudents.forEach((ms) => {
+        const key = `${ms.namaSiswa.trim().toLowerCase()}-${(ms.kelas || '').trim().toLowerCase()}`;
+        const hasNis = ms.nis && seenKeys.has(`nis-${ms.nis}`);
+        const hasNisn = ms.nisn && seenKeys.has(`nisn-${ms.nisn}`);
+        const hasKey = seenKeys.has(key);
+
+        if (!hasKey && !hasNis && !hasNisn) {
+          seenKeys.add(key);
+          if (ms.nis) seenKeys.add(`nis-${ms.nis}`);
+          if (ms.nisn) seenKeys.add(`nisn-${ms.nisn}`);
+
+          list.push({
+            id: ms.id || `master-${ms.nis || ms.namaSiswa}`,
+            namaSiswa: ms.namaSiswa,
+            kelas: ms.kelas,
+            nis: ms.nis,
+            nisn: ms.nisn,
+            source: 'master',
+          });
+        }
+      });
+    }
+
+    // Sort by Kelas then Nama Siswa
+    return list.sort((a, b) => {
+      if (a.kelas !== b.kelas) {
+        return (a.kelas || '').localeCompare(b.kelas || '');
+      }
+      return a.namaSiswa.localeCompare(b.namaSiswa);
+    });
+  }, [students, masterStudents]);
+
+  // Group student options by class for clean navigation in <select>
+  const groupedStudentOptions = React.useMemo(() => {
+    const groups: { [kelas: string]: typeof combinedStudentOptions } = {};
+    combinedStudentOptions.forEach((s) => {
+      const cls = s.kelas || 'Lainnya';
+      if (!groups[cls]) groups[cls] = [];
+      groups[cls].push(s);
+    });
+    return groups;
+  }, [combinedStudentOptions]);
+
+  // Auto pick student details from either TKA or Master Data
   const handleSelectStudentChange = (stdId: string) => {
-    const selected = students.find((s) => s.id === stdId);
+    if (!stdId) {
+      setLaptopFormData((prev) => ({
+        ...prev,
+        studentId: '',
+      }));
+      return;
+    }
+
+    const selected = combinedStudentOptions.find((s) => s.id === stdId);
     if (selected) {
       setLaptopFormData((prev) => ({
         ...prev,
@@ -390,6 +476,20 @@ export const LaptopInventoryView: React.FC<LaptopInventoryViewProps> = ({
 
     return matchSearch && matchStatus && matchGelombang && matchRuang;
   });
+
+  // Deduplicate laptops for batch sticker printing (Tidak ada pengulangan data)
+  const uniqueLaptopsForSticker = React.useMemo(() => {
+    const seen = new Set<string>();
+    return filteredLaptops.filter((laptop) => {
+      const altKey = `${(laptop.namaSiswa || '').trim().toLowerCase()}-${(laptop.kodeRuang || '').trim().toLowerCase()}-${(laptop.noUrutLaptop || '').trim().toLowerCase()}`;
+      if (seen.has(altKey)) {
+        return false;
+      }
+      seen.add(altKey);
+      if (laptop.id) seen.add(laptop.id);
+      return true;
+    });
+  }, [filteredLaptops]);
 
   // Calculate statistics
   const totalCount = laptops.length;
@@ -841,17 +941,17 @@ export const LaptopInventoryView: React.FC<LaptopInventoryViewProps> = ({
 
               <button
                 onClick={() => {
-                  if (filteredLaptops.length === 0) {
-                    alert('Tidak ada data laptop untuk dicetak stiker.');
+                  if (uniqueLaptopsForSticker.length === 0) {
+                    alert('Tidak ada data laptop unik untuk dicetak stiker.');
                     return;
                   }
                   setPrintDocType('stiker-batch');
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl shadow-2xs transition-colors"
-                title="Cetak Kumpulan Stiker Semua Laptop Terfilter"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl shadow-2xs transition-colors cursor-pointer"
+                title="Cetak Kumpulan Stiker Semua Laptop Terfilter (Unik & Bebas Duplikasi)"
               >
                 <Tag className="w-4 h-4 text-amber-600" />
-                <span>Cetak Massal Stiker ({filteredLaptops.length})</span>
+                <span>Cetak Massal Stiker ({uniqueLaptopsForSticker.length})</span>
               </button>
 
               <button
@@ -1427,23 +1527,35 @@ export const LaptopInventoryView: React.FC<LaptopInventoryViewProps> = ({
             </div>
 
             <form onSubmit={handleSubmitLaptopForm} className="space-y-4">
-              {/* Select Student from master data */}
+              {/* Select Student from master data & TKA */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Pilih Dari Master Data Siswa TKA (Opsional)
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Pilih Dari Master Data Siswa TKA & Sekolah (Opsional)
+                  </label>
+                  <span className="text-[10px] font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+                    {combinedStudentOptions.length} Siswa Terkoneksi
+                  </span>
+                </div>
                 <select
                   value={laptopFormData.studentId}
                   onChange={(e) => handleSelectStudentChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500/30"
                 >
-                  <option value="">-- Manual Input / Pilih Siswa Terdaftar --</option>
-                  {students.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.namaSiswa} ({s.kelas}) - NISN: {s.nisn}
-                    </option>
+                  <option value="">-- Ketik Manual atau Pilih Siswa dari Data Master --</option>
+                  {Object.keys(groupedStudentOptions).map((kelas) => (
+                    <optgroup key={kelas} label={`--- KELAS: ${kelas} ---`}>
+                      {groupedStudentOptions[kelas].map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.namaSiswa} ({s.kelas}) {s.nis ? `- NIS: ${s.nis}` : s.nisn ? `- NISN: ${s.nisn}` : ''} [{s.source === 'tka' ? 'Siswa TKA' : 'Data Master'}]
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  💡 Memilih siswa akan otomatis mengsisi <strong>Nama Lengkap Siswa</strong> dan <strong>Kelas Siswa</strong>.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -2331,13 +2443,13 @@ export const LaptopInventoryView: React.FC<LaptopInventoryViewProps> = ({
                       CETAK MASSAL STIKER LAPTOP & SARANA UJIAN TKA 2026
                     </h3>
                     <p className="text-[11px] font-bold text-slate-700">{docSettings.namaSekolah}</p>
-                    <p className="text-[10px] text-slate-500">
-                      Total {filteredLaptops.length} Stiker Unit Laptop Terfilter | Tanggal Cetak: {docSettings.kotaTanggal}
+                    <p className="text-[10px] text-slate-500 font-semibold">
+                      Total {uniqueLaptopsForSticker.length} Stiker Unit Laptop (Terverifikasi Unik & Tanpa Pengulangan Data) | Tanggal Cetak: {docSettings.kotaTanggal}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    {filteredLaptops.map((laptop) => (
+                    {uniqueLaptopsForSticker.map((laptop) => (
                       <div
                         key={laptop.id}
                         className="sticker-card border-2 border-slate-900 rounded-lg p-3 bg-white space-y-2 relative"
