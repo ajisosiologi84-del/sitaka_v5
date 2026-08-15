@@ -242,14 +242,15 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     'Bekerja': 0,
   };
   students.forEach((s) => {
-    const p = s.pilihanStudiLanjut;
-    if (p) {
-      if (pathwayCounts[p] !== undefined) {
-        pathwayCounts[p]++;
+    const p = s.pilihanStudiLanjut || 'Kuliah';
+    const choices = p.split(',').map((c) => c.trim()).filter(Boolean);
+    choices.forEach((choice) => {
+      if (pathwayCounts[choice] !== undefined) {
+        pathwayCounts[choice]++;
       } else {
-        pathwayCounts[p] = (pathwayCounts[p] || 0) + 1;
+        pathwayCounts[choice] = 1;
       }
-    }
+    });
   });
 
   const pathwayChartData = Object.entries(pathwayCounts).map(([name, value]) => ({

@@ -226,20 +226,28 @@ Diperbarui Tanggal  : ${student.updatedAt}
               <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5 text-emerald-700">
                 <GraduationCap className="w-4 h-4" /> 3. Pilihan Studi Lanjut
               </h4>
-              <span
-                className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
-                  student.pilihanStudiLanjut === 'AKADEMI'
-                    ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                    : student.pilihanStudiLanjut === 'Bekerja'
-                    ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                    : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                }`}
-              >
-                Rute: {student.pilihanStudiLanjut || 'Kuliah'}
-              </span>
+              <div className="flex flex-wrap gap-1">
+                {(student.pilihanStudiLanjut || 'Kuliah').split(',').map((p) => {
+                  const trimmed = p.trim();
+                  return (
+                    <span
+                      key={trimmed}
+                      className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
+                        trimmed === 'AKADEMI'
+                          ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                          : trimmed === 'Bekerja'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}
+                    >
+                      Rute: {trimmed}
+                    </span>
+                  );
+                })}
+              </div>
             </div>
 
-            {student.pilihanStudiLanjut === 'Kuliah' || !student.pilihanStudiLanjut ? (
+            {!student.pilihanStudiLanjut || student.pilihanStudiLanjut.includes('Kuliah') ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {/* Pilihan 1 */}
                 <div className="p-3.5 bg-emerald-50/80 rounded-xl border border-emerald-100 space-y-1.5">

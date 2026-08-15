@@ -407,6 +407,35 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
     });
   };
 
+  // Helper for multiple choices in Studi Lanjut (Max 2 Choices, Min 1 Choice)
+  const currentStudiLanjutArray = useMemo(() => {
+    if (!formData.pilihanStudiLanjut) return ['Kuliah'];
+    const arr = String(formData.pilihanStudiLanjut)
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return arr.length > 0 ? arr : ['Kuliah'];
+  }, [formData.pilihanStudiLanjut]);
+
+  const toggleStudiLanjut = (option: string) => {
+    const isSelected = currentStudiLanjutArray.includes(option);
+    if (isSelected) {
+      if (currentStudiLanjutArray.length === 1) {
+        alert('Minimal 1 pilihan studi lanjut wajib dipilih.');
+        return;
+      }
+      const newArr = currentStudiLanjutArray.filter((item) => item !== option);
+      handleChange('pilihanStudiLanjut', newArr.join(', '));
+    } else {
+      if (currentStudiLanjutArray.length >= 2) {
+        alert('Maksimal memilih 2 pilihan studi lanjut. Hapus/batalkan salah satu pilihan yang tercentang terlebih dahulu jika ingin mengganti.');
+        return;
+      }
+      const newArr = [...currentStudiLanjutArray, option];
+      handleChange('pilihanStudiLanjut', newArr.join(', '));
+    }
+  };
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -515,13 +544,14 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
       return;
     }
 
-    // If choices other than Kuliah, normalize prodi choices
+    // If choices include Kuliah, use prodi choices; otherwise normalize
+    const hasKuliah = (formData.pilihanStudiLanjut || '').includes('Kuliah');
     const finalProdi1 =
-      formData.pilihanStudiLanjut === 'Kuliah'
+      hasKuliah
         ? formData.prodiPilihan1 || '-'
         : `-${formData.pilihanStudiLanjut}-`;
     const finalProdi2 =
-      formData.pilihanStudiLanjut === 'Kuliah'
+      hasKuliah
         ? formData.prodiPilihan2 || '-'
         : `-${formData.pilihanStudiLanjut}-`;
 
@@ -1184,29 +1214,33 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
 
           {/* SECTION 3: PILIHAN STUDI LANJUT */}
           <div className="space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <GraduationCap className="w-4 h-4 text-emerald-600" /> 3. Pilihan Studi Lanjut (Wajib)
-            </h4>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4 text-emerald-600" /> 3. Pilihan Studi Lanjut (Wajib)
+              </h4>
+              <span className="text-[11px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
+                <span>Dapat memilih lebih dari 1 pilihan (Maksimal 2 Pilihan)</span>
+              </span>
+            </div>
 
             {/* 3 Main Choice Options */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Option A: AKADEMI */}
-              <label
+              <div
+                onClick={() => toggleStudiLanjut('AKADEMI')}
                 className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                  formData.pilihanStudiLanjut === 'AKADEMI'
-                    ? 'border-indigo-600 bg-indigo-50/70 text-indigo-950 shadow-xs'
+                  currentStudiLanjutArray.includes('AKADEMI')
+                    ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 shadow-xs ring-2 ring-indigo-500/20'
                     : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 text-slate-700'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 font-bold text-xs">
                     <input
-                      type="radio"
-                      name="pilihanStudiLanjut"
-                      value="AKADEMI"
-                      checked={formData.pilihanStudiLanjut === 'AKADEMI'}
-                      onChange={() => handleChange('pilihanStudiLanjut', 'AKADEMI')}
-                      className="text-indigo-600 focus:ring-indigo-500"
+                      type="checkbox"
+                      checked={currentStudiLanjutArray.includes('AKADEMI')}
+                      onChange={() => {}}
+                      className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
                     />
                     <span>a. AKADEMI</span>
                   </div>
@@ -1217,25 +1251,30 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                 <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
                   Sekolah Kedinasan, AKMIL, AKPOL, STIN, IPDN, STAN, dll.
                 </p>
-              </label>
+                {currentStudiLanjutArray.includes('AKADEMI') && (
+                  <div className="mt-2 pt-2 border-t border-indigo-200/60 flex items-center justify-between text-[10px] font-bold text-indigo-700">
+                    <span className="flex items-center gap-1"><Check className="w-3 h-3 text-indigo-600" /> Terpilih</span>
+                    <span className="bg-indigo-200/70 px-1.5 py-0.5 rounded text-[9px]">Pilihan #{currentStudiLanjutArray.indexOf('AKADEMI') + 1}</span>
+                  </div>
+                )}
+              </div>
 
               {/* Option B: Bekerja */}
-              <label
+              <div
+                onClick={() => toggleStudiLanjut('Bekerja')}
                 className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                  formData.pilihanStudiLanjut === 'Bekerja'
-                    ? 'border-amber-600 bg-amber-50/70 text-amber-950 shadow-xs'
+                  currentStudiLanjutArray.includes('Bekerja')
+                    ? 'border-amber-600 bg-amber-50/80 text-amber-950 shadow-xs ring-2 ring-amber-500/20'
                     : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 text-slate-700'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 font-bold text-xs">
                     <input
-                      type="radio"
-                      name="pilihanStudiLanjut"
-                      value="Bekerja"
-                      checked={formData.pilihanStudiLanjut === 'Bekerja'}
-                      onChange={() => handleChange('pilihanStudiLanjut', 'Bekerja')}
-                      className="text-amber-600 focus:ring-amber-500"
+                      type="checkbox"
+                      checked={currentStudiLanjutArray.includes('Bekerja')}
+                      onChange={() => {}}
+                      className="rounded text-amber-600 focus:ring-amber-500 w-4 h-4"
                     />
                     <span>b. Bekerja</span>
                   </div>
@@ -1246,25 +1285,30 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                 <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
                   Memasuki dunia kerja, wirausaha, atau pelatihan kerja profesional.
                 </p>
-              </label>
+                {currentStudiLanjutArray.includes('Bekerja') && (
+                  <div className="mt-2 pt-2 border-t border-amber-200/60 flex items-center justify-between text-[10px] font-bold text-amber-800">
+                    <span className="flex items-center gap-1"><Check className="w-3 h-3 text-amber-600" /> Terpilih</span>
+                    <span className="bg-amber-200/70 px-1.5 py-0.5 rounded text-[9px]">Pilihan #{currentStudiLanjutArray.indexOf('Bekerja') + 1}</span>
+                  </div>
+                )}
+              </div>
 
               {/* Option C: Kuliah */}
-              <label
+              <div
+                onClick={() => toggleStudiLanjut('Kuliah')}
                 className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
-                  formData.pilihanStudiLanjut === 'Kuliah'
-                    ? 'border-emerald-600 bg-emerald-50/70 text-emerald-950 shadow-xs'
+                  currentStudiLanjutArray.includes('Kuliah')
+                    ? 'border-emerald-600 bg-emerald-50/80 text-emerald-950 shadow-xs ring-2 ring-emerald-500/20'
                     : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 text-slate-700'
                 }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2 font-bold text-xs">
                     <input
-                      type="radio"
-                      name="pilihanStudiLanjut"
-                      value="Kuliah"
-                      checked={formData.pilihanStudiLanjut === 'Kuliah'}
-                      onChange={() => handleChange('pilihanStudiLanjut', 'Kuliah')}
-                      className="text-emerald-600 focus:ring-emerald-500"
+                      type="checkbox"
+                      checked={currentStudiLanjutArray.includes('Kuliah')}
+                      onChange={() => {}}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4"
                     />
                     <span>c. Kuliah</span>
                   </div>
@@ -1275,11 +1319,17 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                 <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
                   Lanjut studi perguruan tinggi negeri (PTN), PTS, atau Luar Negeri.
                 </p>
-              </label>
+                {currentStudiLanjutArray.includes('Kuliah') && (
+                  <div className="mt-2 pt-2 border-t border-emerald-200/60 flex items-center justify-between text-[10px] font-bold text-emerald-800">
+                    <span className="flex items-center gap-1"><Check className="w-3 h-3 text-emerald-600" /> Terpilih</span>
+                    <span className="bg-emerald-200/70 px-1.5 py-0.5 rounded text-[9px]">Pilihan #{currentStudiLanjutArray.indexOf('Kuliah') + 1}</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* CONDITIONAL SUB-SECTION: If Kuliah is selected */}
-            {formData.pilihanStudiLanjut === 'Kuliah' ? (
+            {currentStudiLanjutArray.includes('Kuliah') ? (
               <div className="p-4.5 bg-emerald-50/60 border border-emerald-200 rounded-2xl space-y-4 animate-in fade-in slide-in-from-top-2">
                 {banPtAlertMessage && (
                   <div className="p-3 bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-md flex items-center justify-between animate-in zoom-in-95">
@@ -2422,7 +2472,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                 </div>
               </div>
 
-              {submittedStudent.pilihanStudiLanjut === 'Kuliah' && (
+              {(submittedStudent.pilihanStudiLanjut || '').includes('Kuliah') && (
                 <div className="bg-white p-2.5 rounded-xl border border-slate-200 space-y-1 text-xs">
                   <p className="text-[10px] font-bold text-slate-500 uppercase flex items-center gap-1">
                     <GraduationCap className="w-3 h-3 text-indigo-600" /> Pilihan PTN & Prodi

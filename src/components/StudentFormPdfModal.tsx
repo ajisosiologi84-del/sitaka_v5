@@ -375,7 +375,7 @@ export const StudentFormPdfModal: React.FC<StudentFormPdfModalProps> = ({
                   </td>
                 </tr>
                 ${
-                  formData.pilihanStudiLanjut === 'Kuliah'
+                  (!formData.pilihanStudiLanjut || formData.pilihanStudiLanjut.includes('Kuliah'))
                     ? `
                   <tr>
                     <td class="td-label">Pengajuan KIP Kuliah</td>
@@ -1009,7 +1009,7 @@ export const StudentFormPdfModal: React.FC<StudentFormPdfModalProps> = ({
                       </div>
                     </td>
                   </tr>
-                  {formData.pilihanStudiLanjut === 'Kuliah' && (
+                  {(!formData.pilihanStudiLanjut || formData.pilihanStudiLanjut.includes('Kuliah')) && (
                     <tr>
                       <td className="font-bold bg-slate-50">Pengajuan KIP Kuliah</td>
                       <td>

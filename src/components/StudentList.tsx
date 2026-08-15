@@ -158,8 +158,8 @@ export const StudentList: React.FC<StudentListProps> = ({
 
       const matchesStudi =
         selectedStudiLanjut === 'ALL' ||
-        (selectedStudiLanjut === 'Kuliah' && (!student.pilihanStudiLanjut || student.pilihanStudiLanjut === 'Kuliah')) ||
-        student.pilihanStudiLanjut === selectedStudiLanjut;
+        (!student.pilihanStudiLanjut && selectedStudiLanjut === 'Kuliah') ||
+        (student.pilihanStudiLanjut && student.pilihanStudiLanjut.includes(selectedStudiLanjut));
 
       return matchesSearch && matchesKelas && matchesMapel && matchesStudi;
     });
@@ -439,17 +439,25 @@ export const StudentList: React.FC<StudentListProps> = ({
                           </p>
                         </div>
                       </div>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shrink-0 ${
-                          s.pilihanStudiLanjut === 'AKADEMI'
-                            ? 'bg-indigo-100 text-indigo-800'
-                            : s.pilihanStudiLanjut === 'Bekerja'
-                            ? 'bg-amber-100 text-amber-800'
-                            : 'bg-emerald-100 text-emerald-800'
-                        }`}
-                      >
-                        {s.pilihanStudiLanjut || 'Kuliah'}
-                      </span>
+                      <div className="flex flex-wrap gap-1 shrink-0 max-w-[140px] justify-end">
+                        {(s.pilihanStudiLanjut || 'Kuliah').split(',').map((p) => {
+                          const trimmed = p.trim();
+                          return (
+                            <span
+                              key={trimmed}
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                trimmed === 'AKADEMI'
+                                  ? 'bg-indigo-100 text-indigo-800'
+                                  : trimmed === 'Bekerja'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                              }`}
+                            >
+                              {trimmed}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
 
                     {/* TKA Mapel Chips */}
@@ -468,7 +476,7 @@ export const StudentList: React.FC<StudentListProps> = ({
                     {/* Target PTN / Prodi */}
                     <div className="text-xs space-y-1">
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Target Studi / PTN:</div>
-                      {s.pilihanStudiLanjut === 'Kuliah' || !s.pilihanStudiLanjut ? (
+                      {!s.pilihanStudiLanjut || s.pilihanStudiLanjut.includes('Kuliah') ? (
                         <div className="space-y-1">
                           <p className="text-xs font-semibold text-emerald-950 truncate" title={`${s.ptn1} - ${s.prodiPilihan1}`}>
                             <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded mr-1">P1</span>
@@ -481,7 +489,7 @@ export const StudentList: React.FC<StudentListProps> = ({
                         </div>
                       ) : (
                         <p className="text-xs text-slate-600 italic">
-                          Persiapan {s.pilihanStudiLanjut === 'AKADEMI' ? 'AKADEMI (TNI/Kedinasan)' : 'Dunia Kerja & Karir'}
+                          Persiapan {s.pilihanStudiLanjut.includes('AKADEMI') ? 'AKADEMI (TNI/Kedinasan)' : 'Dunia Kerja & Karir'}
                         </p>
                       )}
                     </div>
@@ -644,22 +652,30 @@ export const StudentList: React.FC<StudentListProps> = ({
 
                       {/* Studi Lanjut Badge */}
                       <td className="p-3.5">
-                        <span
-                          className={`inline-block px-2.5 py-1 rounded-lg font-bold text-[10px] ${
-                            s.pilihanStudiLanjut === 'AKADEMI'
-                              ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                              : s.pilihanStudiLanjut === 'Bekerja'
-                              ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                              : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                          }`}
-                        >
-                          {s.pilihanStudiLanjut || 'Kuliah'}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {(s.pilihanStudiLanjut || 'Kuliah').split(',').map((p) => {
+                            const trimmed = p.trim();
+                            return (
+                              <span
+                                key={trimmed}
+                                className={`inline-block px-2.5 py-1 rounded-lg font-bold text-[10px] ${
+                                  trimmed === 'AKADEMI'
+                                    ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                                    : trimmed === 'Bekerja'
+                                    ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                    : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                }`}
+                              >
+                                {trimmed}
+                              </span>
+                            );
+                          })}
+                        </div>
                       </td>
 
                       {/* Prodi & Universitas Pilihan 1 & 2 */}
                       <td className="p-3.5 font-medium text-slate-800 max-w-[220px]">
-                        {s.pilihanStudiLanjut === 'Kuliah' || !s.pilihanStudiLanjut ? (
+                        {!s.pilihanStudiLanjut || s.pilihanStudiLanjut.includes('Kuliah') ? (
                           <div className="space-y-1">
                             <div className="text-[11px] font-semibold text-emerald-950 leading-tight" title={s.ptn1 ? `${s.ptn1} - ${s.prodiPilihan1}` : s.prodiPilihan1}>
                               <span className="text-[9px] font-bold text-emerald-700 bg-emerald-100/80 px-1.5 py-0.2 rounded mr-1">P1</span>
@@ -672,7 +688,7 @@ export const StudentList: React.FC<StudentListProps> = ({
                           </div>
                         ) : (
                           <span className="text-[11px] text-slate-500 italic">
-                            Persiapan {s.pilihanStudiLanjut === 'AKADEMI' ? 'AKADEMI (TNI/Kedinasan)' : 'Dunia Kerja'}
+                            Persiapan {s.pilihanStudiLanjut.includes('AKADEMI') ? 'AKADEMI (TNI/Kedinasan)' : 'Dunia Kerja'}
                           </span>
                         )}
                       </td>

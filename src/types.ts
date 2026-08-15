@@ -1,6 +1,6 @@
 export type UserRole = 'superadmin' | 'walikelas' | 'bk' | 'proktor' | 'teknisi' | 'siswa';
 
-export type PilihanStudiLanjutType = 'AKADEMI' | 'Bekerja' | 'Kuliah';
+export type PilihanStudiLanjutType = 'AKADEMI' | 'Bekerja' | 'Kuliah' | string;
 
 export type JenisPrestasi = 'Akademik' | 'Non-Akademik';
 
