@@ -169,9 +169,14 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
     }
   };
 
+  // Refs to prevent re-initialization reset on scroll / re-render
+  const initializedEditingStudentIdRef = React.useRef<string | null>(null);
+  const initializedSiswaAutoFillRef = React.useRef<boolean>(false);
+
   // Effect to automatically auto-fill logged-in student data matching NIS
   useEffect(() => {
-    if (userRole === 'siswa' && availableMasterStudents.length > 0) {
+    if (userRole === 'siswa' && availableMasterStudents.length > 0 && !editingStudent && !initializedSiswaAutoFillRef.current) {
+      initializedSiswaAutoFillRef.current = true;
       const matched = availableMasterStudents[0];
       setSelectedMasterId(matched.id);
       setFormData((prev) => ({
@@ -185,7 +190,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
         `⚡ Auto-Fill Otomatis Berhasil dari Input Data Sekolah: ${matched.namaSiswa} (${matched.kelas}) - NIS: ${matched.nis}`
       );
     }
-  }, [userRole, availableMasterStudents]);
+  }, [userRole, availableMasterStudents, editingStudent]);
 
   // Effect to handle selection coming from BAN-PT main menu directory
   useEffect(() => {
@@ -295,6 +300,12 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
 
   useEffect(() => {
     if (editingStudent) {
+      const studentKey = editingStudent.id || `${editingStudent.nis}-${editingStudent.namaSiswa}`;
+      if (initializedEditingStudentIdRef.current === studentKey) {
+        return; // Don't reset state if already initialized for this editing student
+      }
+      initializedEditingStudentIdRef.current = studentKey;
+
       const parseUnivAndProdi = (univ?: string, prodiCombo?: string, defaultUniv: string = '', defaultProdi: string = '') => {
         if (univ && univ.trim() !== '') {
           return { univ, prodi: prodiCombo || '' };
@@ -372,6 +383,8 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
         catatan: editingStudent.catatan || '',
       });
       setPrestasiList(editingStudent.prestasiList || []);
+    } else {
+      initializedEditingStudentIdRef.current = null;
     }
   }, [editingStudent, masterStudents, availableMasterStudents, userRole, currentUserNis]);
 
@@ -1226,9 +1239,8 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
             {/* 3 Main Choice Options */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {/* Option A: AKADEMI */}
-              <div
-                onClick={() => toggleStudiLanjut('AKADEMI')}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+              <label
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between select-none ${
                   currentStudiLanjutArray.includes('AKADEMI')
                     ? 'border-indigo-600 bg-indigo-50/80 text-indigo-950 shadow-xs ring-2 ring-indigo-500/20'
                     : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 text-slate-700'
@@ -1239,8 +1251,8 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                     <input
                       type="checkbox"
                       checked={currentStudiLanjutArray.includes('AKADEMI')}
-                      onChange={() => {}}
-                      className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      onChange={() => toggleStudiLanjut('AKADEMI')}
+                      className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
                     />
                     <span>a. AKADEMI</span>
                   </div>
@@ -1257,12 +1269,11 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                     <span className="bg-indigo-200/70 px-1.5 py-0.5 rounded text-[9px]">Pilihan #{currentStudiLanjutArray.indexOf('AKADEMI') + 1}</span>
                   </div>
                 )}
-              </div>
+              </label>
 
               {/* Option B: Bekerja */}
-              <div
-                onClick={() => toggleStudiLanjut('Bekerja')}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+              <label
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between select-none ${
                   currentStudiLanjutArray.includes('Bekerja')
                     ? 'border-amber-600 bg-amber-50/80 text-amber-950 shadow-xs ring-2 ring-amber-500/20'
                     : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 text-slate-700'
@@ -1273,8 +1284,8 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                     <input
                       type="checkbox"
                       checked={currentStudiLanjutArray.includes('Bekerja')}
-                      onChange={() => {}}
-                      className="rounded text-amber-600 focus:ring-amber-500 w-4 h-4"
+                      onChange={() => toggleStudiLanjut('Bekerja')}
+                      className="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
                     />
                     <span>b. Bekerja</span>
                   </div>
@@ -1291,12 +1302,11 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                     <span className="bg-amber-200/70 px-1.5 py-0.5 rounded text-[9px]">Pilihan #{currentStudiLanjutArray.indexOf('Bekerja') + 1}</span>
                   </div>
                 )}
-              </div>
+              </label>
 
               {/* Option C: Kuliah */}
-              <div
-                onClick={() => toggleStudiLanjut('Kuliah')}
-                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+              <label
+                className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between select-none ${
                   currentStudiLanjutArray.includes('Kuliah')
                     ? 'border-emerald-600 bg-emerald-50/80 text-emerald-950 shadow-xs ring-2 ring-emerald-500/20'
                     : 'border-slate-200 hover:border-slate-300 bg-slate-50/50 text-slate-700'
@@ -1307,8 +1317,8 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                     <input
                       type="checkbox"
                       checked={currentStudiLanjutArray.includes('Kuliah')}
-                      onChange={() => {}}
-                      className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                      onChange={() => toggleStudiLanjut('Kuliah')}
+                      className="rounded text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer"
                     />
                     <span>c. Kuliah</span>
                   </div>
@@ -1325,7 +1335,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                     <span className="bg-emerald-200/70 px-1.5 py-0.5 rounded text-[9px]">Pilihan #{currentStudiLanjutArray.indexOf('Kuliah') + 1}</span>
                   </div>
                 )}
-              </div>
+              </label>
             </div>
 
             {/* CONDITIONAL SUB-SECTION: If Kuliah is selected */}

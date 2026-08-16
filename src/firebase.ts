@@ -45,15 +45,25 @@ export function subscribeQuotaStatus(cb: (exceeded: boolean) => void): () => voi
 
 function checkQuotaError(error: any): boolean {
   if (!error) return false;
-  const msg = String(error?.message || error || '');
+  const msg = String(error?.message || error?.description || error || '');
   const code = String(error?.code || '');
-  if (
+
+  const isQuota =
     code === 'resource-exhausted' ||
     code.includes('resource-exhausted') ||
     msg.includes('Quota exceeded') ||
     msg.includes('resource-exhausted') ||
-    msg.includes('RESOURCE_EXHAUSTED')
-  ) {
+    msg.includes('RESOURCE_EXHAUSTED');
+
+  const isUnavailableOrOffline =
+    code === 'unavailable' ||
+    code.includes('unavailable') ||
+    msg.includes('Could not reach Cloud Firestore backend') ||
+    msg.includes('Connection failed') ||
+    msg.includes('the client is offline') ||
+    msg.includes('offline');
+
+  if (isQuota) {
     if (!isQuotaExceeded) {
       isQuotaExceeded = true;
       console.warn('[Firestore] Quota exceeded limit reached. Gracefully falling back to localStorage mode for uninterrupted portal operations.');
@@ -61,6 +71,16 @@ function checkQuotaError(error: any): boolean {
     }
     return true;
   }
+
+  if (isUnavailableOrOffline) {
+    if (!isQuotaExceeded) {
+      isQuotaExceeded = true;
+      console.warn('[Firestore] Backend connection unavailable or offline. Gracefully falling back to local cache mode for uninterrupted portal operations.');
+      quotaListeners.forEach((fn) => fn(true));
+    }
+    return true;
+  }
+
   return false;
 }
 
