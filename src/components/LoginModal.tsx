@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, UserCheck, GraduationCap, Users, KeyRound, Lock, User, Eye, EyeOff, AlertOctagon, Clock, Laptop } from 'lucide-react';
+import { ShieldCheck, UserCheck, GraduationCap, Users, KeyRound, Lock, User, Eye, EyeOff, AlertOctagon, Clock, Laptop, Minimize2, Maximize2 } from 'lucide-react';
 import { Student, MasterSchoolStudent } from '../types';
 import { getStoredSystemPasswords, getStoredSecurityPolicy, getStoredCustomUsers, addSecurityLog, addMasterSchoolStudent } from '../utils/storage';
 import { sanitizeNis, generateRandomStudentPassword } from '../utils/sanitizer';
@@ -17,6 +17,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, students, maste
   const [studentPasswordInput, setStudentPasswordInput] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   // Rate Limiting & Lockout State
   const [failedAttempts, setFailedAttempts] = useState(0);
@@ -306,13 +307,42 @@ export const LoginModal: React.FC<LoginModalProps> = ({ onLogin, students, maste
     }
   };
 
+  if (isMinimized) {
+    return (
+      <div className="fixed bottom-5 right-5 z-50 animate-in fade-in slide-in-from-bottom-4">
+        <button
+          type="button"
+          onClick={() => setIsMinimized(false)}
+          className="px-5 py-3 bg-slate-900/95 hover:bg-indigo-900 text-white font-bold text-xs rounded-2xl shadow-2xl border border-indigo-500/40 flex items-center gap-2.5 transition-all transform hover:scale-105 group cursor-pointer backdrop-blur-md"
+          title="Buka kembali Menu Login SITAKA"
+        >
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <Lock className="w-4 h-4 text-amber-300 shrink-0" />
+          <div className="text-left">
+            <div className="text-[10px] text-slate-400 font-semibold leading-none">Portal SITAKA 2026</div>
+            <div className="text-xs font-bold text-white leading-tight mt-0.5">Buka Form / Menu Login</div>
+          </div>
+          <Maximize2 className="w-4 h-4 text-indigo-300 group-hover:text-white ml-1 shrink-0" />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 flex flex-col">
         {/* Header */}
         <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 p-6 text-white text-center relative">
-          <div className="absolute top-4 right-4 bg-white/10 px-3 py-1 rounded-full text-[11px] font-bold tracking-wider text-indigo-200 uppercase">
-            PORTAL SITAKA 2026
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsMinimized(true)}
+              className="bg-white/10 hover:bg-white/25 text-indigo-100 hover:text-white px-2.5 py-1 rounded-full text-[11px] font-bold tracking-wider flex items-center gap-1 transition-all border border-white/20 cursor-pointer"
+              title="Minimize / Sembunyikan Menu Login agar Full Screen"
+            >
+              <Minimize2 className="w-3.5 h-3.5" />
+              <span>Full Screen</span>
+            </button>
           </div>
           <div className="w-14 h-14 bg-gradient-to-tr from-indigo-600 to-teal-500 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-indigo-600/30 mb-3 text-white border-2 border-white/20">
             <GraduationCap className="w-8 h-8" />

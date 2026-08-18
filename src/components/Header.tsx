@@ -92,25 +92,20 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 lg:px-8 py-3.5 flex items-center justify-between shadow-2xs">
       <div className="flex items-center gap-3">
-        {/* Mobile Toggle Button */}
+        {/* Sidebar Toggle Button (Mobile & Laptop) */}
         <button
-          onClick={() => setIsMobileOpen(true)}
-          className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg lg:hidden"
-          title="Buka Menu Sidebar"
+          onClick={() => {
+            setIsMobileOpen(true);
+            if (setIsSidebarMinimized) setIsSidebarMinimized(!isSidebarMinimized);
+          }}
+          className="p-2 text-slate-600 hover:text-indigo-600 hover:bg-slate-100 rounded-xl transition-all flex items-center gap-1.5 border border-slate-200/80 shadow-2xs cursor-pointer"
+          title={isSidebarMinimized ? "Buka Menu Utama (Expand)" : "Kecilkan / Minimize Menu ke Kiri"}
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-5 h-5 text-indigo-600" />
+          <span className="hidden sm:inline text-xs font-bold text-slate-700">
+            {isSidebarMinimized ? 'Buka Menu' : 'Kecilkan Menu'}
+          </span>
         </button>
-
-        {/* Desktop Sidebar Toggle Button */}
-        {setIsSidebarMinimized && (
-          <button
-            onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
-            className="hidden lg:flex p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-            title={isSidebarMinimized ? "Buka Menu Utama (Expand)" : "Sembunyikan/Kecilkan Menu (Minimize)"}
-          >
-            <Menu className="w-5 h-5" />
-          </button>
-        )}
 
         <div>
           <div className="flex items-center gap-2">

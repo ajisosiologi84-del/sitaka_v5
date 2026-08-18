@@ -210,11 +210,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
               )}
             </div>
 
-            {/* Sidebar toggle button (visible on desktop) */}
+            {/* Mobile Minimize / Tutup ke Kiri Button */}
+            <button
+              onClick={() => setIsMobileOpen(false)}
+              className="lg:hidden p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all shrink-0 border border-slate-700/60"
+              title="Minimize / Tutup Menu ke Kiri"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+
+            {/* Desktop Minimize Toggle Button */}
             <button
               onClick={() => setIsSidebarMinimized(!isSidebarMinimized)}
               className="hidden lg:flex p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
-              title={isSidebarMinimized ? "Buka Sidebar" : "Kecilkan Sidebar"}
+              title={isSidebarMinimized ? "Buka Menu (Expand)" : "Kecilkan Menu ke Kiri (Minimize)"}
             >
               {isSidebarMinimized ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
             </button>
@@ -359,6 +368,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
       </aside>
+
+      {/* Floating Quick Minimize/Toggle Sidebar Button on Left Edge */}
+      {(!isMobileOpen && isSidebarMinimized) && (
+        <button
+          onClick={() => {
+            setIsSidebarMinimized(false);
+            setIsMobileOpen(true);
+          }}
+          className="fixed left-0 top-1/2 -translate-y-1/2 z-40 bg-gradient-to-r from-indigo-700 to-indigo-600 hover:from-indigo-600 hover:to-indigo-500 text-white py-3 px-2 rounded-r-2xl shadow-xl shadow-indigo-600/30 transition-all transform hover:scale-110 flex flex-col items-center justify-center border-y border-r border-indigo-400/40 group cursor-pointer"
+          title="Buka / Expand Menu Sidebar"
+        >
+          <ChevronRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+          <span className="text-[9px] font-black tracking-widest uppercase [writing-mode:vertical-lr] mt-1 text-indigo-100">
+            MENU
+          </span>
+        </button>
+      )}
     </>
   );
 };

@@ -21,13 +21,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Briefcase,
-  Building2
+  Building2,
+  Printer
 } from 'lucide-react';
 import { Student } from '../types';
 import { MAPEL_TKA_OPTIONS } from '../data/mockStudents';
 import { exportStudentsToCSV } from '../utils/storage';
 import { exportStudentsToExcel } from '../utils/excelUtils';
 import { ImportExcelModal } from './ImportExcelModal';
+import { BatchPrintStudentModal } from './BatchPrintStudentModal';
 
 interface StudentListProps {
   students: Student[];
@@ -68,6 +70,7 @@ export const StudentList: React.FC<StudentListProps> = ({
   const [showFilterDeleteModal, setShowFilterDeleteModal] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isBatchPrintModalOpen, setIsBatchPrintModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Animated process state for clearing/resetting data
@@ -234,6 +237,15 @@ export const StudentList: React.FC<StudentListProps> = ({
                 <span className="hidden sm:inline">Kartu Grid</span>
               </button>
             </div>
+
+            <button
+              onClick={() => setIsBatchPrintModalOpen(true)}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-900 text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              title="Cetak Massal Hasil Input Siswa TKA & Studi Lanjut (Format PDF / Langsung Cetak)"
+            >
+              <Printer className="w-3.5 h-3.5 text-slate-900" />
+              <span>Cetak Massal</span>
+            </button>
 
             {!isReadOnly && (
               <button
@@ -958,6 +970,16 @@ export const StudentList: React.FC<StudentListProps> = ({
           if (onRefreshData) onRefreshData();
         }}
       />
+
+      {/* Batch Print Student Modal */}
+      {isBatchPrintModalOpen && (
+        <BatchPrintStudentModal
+          students={students}
+          initialSelectedKelas={selectedKelas}
+          initialSelectedIds={selectedIds}
+          onClose={() => setIsBatchPrintModalOpen(false)}
+        />
+      )}
 
       {/* Notification Toast */}
       {toastMessage && (
