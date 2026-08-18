@@ -41,7 +41,7 @@ export interface Student {
   updatedAt: string;
 }
 
-export type NavigationTab = 'dashboard' | 'students' | 'schoolData' | 'form' | 'analysis' | 'appscript' | 'laptop' | 'settings' | 'banpt' | 'mapelPilihan' | 'snbpCalc';
+export type NavigationTab = 'dashboard' | 'students' | 'schoolData' | 'form' | 'analysis' | 'appscript' | 'laptop' | 'settings' | 'banpt' | 'mapelPilihan' | 'snbpCalc' | 'adminMonitor';
 
 export interface MasterSchoolStudent {
   id: string;

@@ -347,6 +347,29 @@ export function subscribeSystemSettingFromFirestore(key: string, callback: (data
   };
 }
 
+export function resetFirestoreQuotaCircuitBreaker(): void {
+  isQuotaExceeded = false;
+  quotaListeners.forEach((fn) => fn(false));
+}
+
+export async function testFirestorePing(): Promise<{ success: boolean; latencyMs: number; error?: string }> {
+  const startTime = performance.now();
+  try {
+    const testDocRef = doc(db, 'systemSettings', 'ping');
+    await getDoc(testDocRef);
+    const endTime = performance.now();
+    return { success: true, latencyMs: Math.round(endTime - startTime) };
+  } catch (err: any) {
+    const endTime = performance.now();
+    const isQuota = checkQuotaError(err);
+    return {
+      success: !isQuota,
+      latencyMs: Math.round(endTime - startTime),
+      error: err?.message || String(err)
+    };
+  }
+}
+
 /**
  * Realtime listener for students collection
  */

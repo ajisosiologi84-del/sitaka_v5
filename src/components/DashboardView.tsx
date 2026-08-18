@@ -19,7 +19,8 @@ import {
   FileText,
   AlertCircle,
   PieChart as PieIcon,
-  BarChart3
+  BarChart3,
+  Activity
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -300,10 +301,17 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('appscript')}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-semibold rounded-xl border border-emerald-500/30 transition-all"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 text-xs font-semibold rounded-xl border border-emerald-500/30 transition-all cursor-pointer"
             >
               <FileSpreadsheet className="w-4 h-4" />
               Google Apps Script
+            </button>
+            <button
+              onClick={() => setActiveTab('adminMonitor')}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600/30 hover:bg-indigo-600/40 text-indigo-200 text-xs font-semibold rounded-xl border border-indigo-400/30 transition-all cursor-pointer"
+            >
+              <Activity className="w-4 h-4 text-emerald-400" />
+              Monitor Beban 360 Siswa
             </button>
           </div>
         </div>

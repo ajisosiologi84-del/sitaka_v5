@@ -21,6 +21,7 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
+  Activity,
 } from 'lucide-react';
 import { NavigationTab, UserRole } from '../types';
 
@@ -132,6 +133,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       icon: <Code2 className="w-5 h-5" />,
       badge: appsScriptUrl ? 'Aktif' : 'Setup',
       description: 'Pusat Integrasi & Generator Google Sheets Backend',
+      roles: ['superadmin', 'walikelas', 'bk', 'proktor', 'teknisi'],
+    },
+    {
+      id: 'adminMonitor',
+      label: 'MONITOR LATENSI & BEBAN 360 SISWA',
+      icon: <Activity className="w-5 h-5 text-emerald-400" />,
+      badge: '360 Siswa',
+      description: 'Monitor real-time Firestore, Apps Script & Kuota',
       roles: ['superadmin', 'walikelas', 'bk', 'proktor', 'teknisi'],
     },
     {

@@ -60,6 +60,7 @@ import { SettingsView } from './components/SettingsView';
 import { BanPtDirectoryView } from './components/BanPtDirectoryView';
 import { MapelPilihanView } from './components/MapelPilihanView';
 import { SnbpCalculatorView } from './components/SnbpCalculatorView';
+import { AdminMonitorView } from './components/AdminMonitorView';
 import { StudentDetailModal } from './components/StudentDetailModal';
 import { LoginModal } from './components/LoginModal';
 import { RbacMatrixModal } from './components/RbacMatrixModal';
@@ -994,6 +995,14 @@ export default function App() {
                 setAppsScriptUrl(url);
               }}
               onSyncGoogleSheets={syncFromGoogleSheets}
+            />
+          )}
+
+          {activeTab === 'adminMonitor' && userRole !== 'siswa' && (
+            <AdminMonitorView
+              students={students}
+              masterSchoolStudents={masterSchoolStudents}
+              appsScriptUrl={appsScriptUrl}
             />
           )}
 
