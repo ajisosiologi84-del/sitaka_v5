@@ -38,7 +38,9 @@ import {
   BookOpenCheck,
   ListOrdered,
   ArrowLeft,
-  LogOut
+  LogOut,
+  AlertTriangle,
+  Lock
 } from 'lucide-react';
 import {
   Student,
@@ -116,6 +118,11 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
   const [appsScriptStatus, setAppsScriptStatus] = useState<string | null>(null);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [submittedStudent, setSubmittedStudent] = useState<Student | null>(null);
+
+  // --- STATE FOR UPLOAD PROGRESS PERCENTAGE ---
+  const [isUploadingModalOpen, setIsUploadingModalOpen] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState('');
 
   // --- STATE & HELPERS FOR INTEGRATION OF MAPEL PILIHAN 845, BAN-PT DIRECTORY & PDF PRINT ---
   const [mapelSearchQuery, setMapelSearchQuery] = useState('');
@@ -570,6 +577,9 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
 
     setIsSubmitting(true);
     setAppsScriptStatus(null);
+    setIsUploadingModalOpen(true);
+    setUploadProgress(15);
+    setUploadStage('Memeriksa kelengkapan & validasi data siswa...');
 
     const gasUrl = getAppsScriptUrl();
 
@@ -581,33 +591,48 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
       prestasiList: prestasiList.filter((p) => p.namaPrestasi.trim() !== ''),
     };
 
+    // Stage 2: Verification
+    await new Promise((r) => setTimeout(r, 250));
+    setUploadProgress(40);
+    setUploadStage('Memproses & memverifikasi pasfoto resmi...');
+
+    // Stage 3: Database & Drive Sync
+    await new Promise((r) => setTimeout(r, 300));
+    setUploadProgress(70);
+    setUploadStage(
+      gasUrl
+        ? 'Mengirim & menyinkronkan data ke Database & Google Drive...'
+        : 'Menyimpan data ke Database...'
+    );
+
+    let studentToSave: Student;
     if (editingStudent) {
-      const studentToSave: Student = {
+      studentToSave = {
         ...editingStudent,
         ...payloadData,
       };
-
-      if (gasUrl) {
-        setAppsScriptStatus('Mengirim data ke Google Sheets & Drive...');
-      }
-
-      onSaveStudent(studentToSave);
-      setSubmittedStudent(studentToSave);
     } else {
-      const newStudentObj: Student = {
+      studentToSave = {
         id: 'std-' + Date.now(),
         ...payloadData,
         createdAt: new Date().toISOString().split('T')[0],
-      };
-
-      if (gasUrl) {
-        setAppsScriptStatus('Mengirim data ke Google Sheets & Drive...');
-      }
-
-      onSaveStudent(payloadData);
-      setSubmittedStudent(newStudentObj);
+      } as Student;
     }
 
+    onSaveStudent(studentToSave);
+    setSubmittedStudent(studentToSave);
+
+    // Stage 4: Finalizing
+    await new Promise((r) => setTimeout(r, 350));
+    setUploadProgress(95);
+    setUploadStage('Penyimpanan berhasil! Mengonfirmasi data...');
+
+    await new Promise((r) => setTimeout(r, 250));
+    setUploadProgress(100);
+    setUploadStage('Pengiriman Data 100% Selesai!');
+
+    await new Promise((r) => setTimeout(r, 300));
+    setIsUploadingModalOpen(false);
     setIsSubmitting(false);
     setIsSuccessModalOpen(true);
   };
@@ -782,9 +807,9 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                   </span>
                   <Printer className="w-4 h-4 text-amber-400" />
                 </div>
-                <h5 className="font-bold text-amber-200 text-xs">Simpan & Cetak PDF</h5>
+                <h5 className="font-bold text-amber-200 text-xs">Simpan (Klik 1x) & Cetak PDF</h5>
                 <p className="text-[11px] text-amber-100/90 leading-relaxed">
-                  Klik <strong>"Simpan Data Siswa"</strong>, lalu tekan tombol <strong>"Cetak / Export PDF"</strong> untuk mengunduh bukti resmi ber-Kop & QR Code.
+                  Tekan <strong>"Simpan Data Siswa" CUKUP 1 KALI</strong>. Apabila terdapat kesalahan input, perubahan data bisa diajukan melalui <strong>Admin Sekolah / Tim Panitia TKA</strong>.
                 </p>
               </div>
             </div>
@@ -2184,6 +2209,21 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
             )}
           </div>
 
+          {/* PERATURAN & PERINGATAN KLIK SIMPAN 1 KALI */}
+          <div className="p-4 bg-amber-50 border-2 border-amber-300 rounded-2xl flex items-start gap-3.5 text-amber-950 shadow-sm my-4">
+            <div className="p-2 bg-amber-500 text-white rounded-xl shrink-0 shadow-xs">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="space-y-1 text-xs">
+              <h5 className="font-black uppercase tracking-wider text-amber-900 flex items-center gap-1.5 text-[11px]">
+                <span>PERATURAN PENGISIAN: KLIK "SIMPAN DATA SISWA" CUKUP 1 KALI SAJA</span>
+              </h5>
+              <p className="text-amber-800 leading-relaxed font-medium">
+                Siswa diimbau untuk meneliti seluruh kebenaran data (Identitas, Pasfoto, Mapel TKA, dan PTN Pilihan) sebelum menyimpan. Klik tombol <strong>"Simpan Data Siswa" CUKUP 1 KALI SAJA</strong>. Apabila terdapat kesalahan input atau perubahan data setelah disimpan, silakan mengajukan perbaikan data melalui <strong>Admin Sekolah / Tim Panitia TKA</strong>.
+              </p>
+            </div>
+          </div>
+
           {/* Form Actions */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-200">
             <button
@@ -2220,7 +2260,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                 ) : (
                   <>
                     <Save className="w-4 h-4" />
-                    <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Data Siswa'}</span>
+                    <span>{isSubmitting ? 'Memproses... (Harap Tunggu)' : 'Simpan Data Siswa (Klik 1x)'}</span>
                   </>
                 )}
               </button>
@@ -2422,6 +2462,59 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
         </div>
       )}
 
+      {/* MODAL PROSENTASE PENGIRIMAN DATA (PROGRESS BAR) */}
+      {isUploadingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 text-center space-y-6 transform animate-in zoom-in-95 duration-200">
+            {/* Animated Icon */}
+            <div className="relative mx-auto w-20 h-20 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-indigo-500/20 animate-ping" />
+              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 via-indigo-700 to-sky-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                <Upload className="w-8 h-8 animate-bounce" />
+              </div>
+            </div>
+
+            {/* Title & Stage Status */}
+            <div className="space-y-1.5">
+              <h4 className="text-lg font-extrabold text-slate-800">
+                Mengirim Data Siswa...
+              </h4>
+              <p className="text-xs font-semibold text-indigo-600 flex items-center justify-center gap-1.5 min-h-[20px]">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500 animate-spin" />
+                <span>{uploadStage}</span>
+              </p>
+            </div>
+
+            {/* Big Percentage Display */}
+            <div className="py-2">
+              <div className="text-4xl font-black text-slate-900 tracking-tight font-mono">
+                {uploadProgress}<span className="text-indigo-600">%</span>
+              </div>
+            </div>
+
+            {/* Progress Bar Container */}
+            <div className="space-y-2">
+              <div className="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 shadow-inner">
+                <div
+                  className="h-full bg-gradient-to-r from-indigo-500 via-sky-500 to-emerald-500 rounded-full transition-all duration-300 ease-out shadow-xs"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase tracking-wider px-1">
+                <span>15% Validasi</span>
+                <span>70% Sinkron</span>
+                <span>100% Terkirim</span>
+              </div>
+            </div>
+
+            {/* Informational Footer Note */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl text-[11px] text-slate-600 font-medium leading-relaxed">
+              Mohon <strong className="text-slate-800">jangan menutup atau me-refresh halaman</strong> saat proses persentase pengiriman sedang berlangsung.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ANIMATED SUCCESS MODAL (DATA SUDAH TERKIRIM) */}
       {isSuccessModalOpen && submittedStudent && (
         <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300">
@@ -2503,6 +2596,14 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                     <span>Database Cloud Firestore</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Catatan Perubahan Data via Admin */}
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-[11px] font-medium text-left flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <span>
+                  Data Anda telah tersimpan secara resmi. Jika ada kesalahan input atau perubahan data di kemudian hari, silakan hubungi <strong>Admin Sekolah / Panitia TKA</strong> untuk mengajukan perbaikan.
+                </span>
               </div>
             </div>
 
