@@ -2556,9 +2556,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                         className="w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-800 font-bold"
                       >
                         <option value="ALL">Semua Kelas (ALL)</option>
+                        <option value="XII-1">XII-1</option>
+                        <option value="XII-2">XII-2</option>
+                        <option value="XII-3">XII-3</option>
+                        <option value="XII-4">XII-4</option>
+                        <option value="XII-5">XII-5</option>
+                        <option value="XII-6">XII-6</option>
+                        <option value="XII-7">XII-7</option>
+                        <option value="XII-8">XII-8</option>
+                        <option value="XII-9">XII-9</option>
+                        <option value="XII-10">XII-10</option>
                         <option value="XII MIPA 1">XII MIPA 1</option>
                         <option value="XII MIPA 2">XII MIPA 2</option>
                         <option value="XII IPS 1">XII IPS 1</option>
+                        <option value="XII IPS 2">XII IPS 2</option>
                       </select>
                     </div>
                   </div>

@@ -132,6 +132,16 @@ export const SchoolDataView: React.FC<SchoolDataViewProps> = ({
   const availableClasses = useMemo(() => {
     return Array.from(
       new Set([
+        'XII-1',
+        'XII-2',
+        'XII-3',
+        'XII-4',
+        'XII-5',
+        'XII-6',
+        'XII-7',
+        'XII-8',
+        'XII-9',
+        'XII-10',
         'XII MIPA 1',
         'XII MIPA 2',
         'XII IPS 1',

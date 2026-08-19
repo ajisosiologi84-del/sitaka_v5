@@ -91,7 +91,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
     namaSiswa: '',
     nis: '',
     nisn: '',
-    kelas: 'XII MIPA 1',
+    kelas: 'XII-1',
     jenisKelamin: 'L' as 'L' | 'P',
     mapelTka1: 'Matematika',
     mapelTka2: 'Fisika',
@@ -334,7 +334,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
       let initNama = editingStudent.namaSiswa || '';
       let initNis = editingStudent.nis || '';
       let initNisn = editingStudent.nisn || '';
-      let initKelas = editingStudent.kelas || 'XII MIPA 1';
+      let initKelas = editingStudent.kelas || 'XII-1';
 
       if (masterStudents.length > 0) {
         const searchList = userRole === 'siswa' ? availableMasterStudents : masterStudents;
@@ -1116,6 +1116,16 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                   onChange={(e) => handleChange('kelas', e.target.value)}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
+                  <option value="XII-1">XII-1</option>
+                  <option value="XII-2">XII-2</option>
+                  <option value="XII-3">XII-3</option>
+                  <option value="XII-4">XII-4</option>
+                  <option value="XII-5">XII-5</option>
+                  <option value="XII-6">XII-6</option>
+                  <option value="XII-7">XII-7</option>
+                  <option value="XII-8">XII-8</option>
+                  <option value="XII-9">XII-9</option>
+                  <option value="XII-10">XII-10</option>
                   <option value="XII MIPA 1">XII MIPA 1</option>
                   <option value="XII MIPA 2">XII MIPA 2</option>
                   <option value="XII IPS 1">XII IPS 1</option>
