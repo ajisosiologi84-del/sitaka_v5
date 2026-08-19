@@ -837,6 +837,15 @@ function processFotoSiswa(fotoData, namaSiswa, nisn, nis) {
       var fileNamePrefix = cleanNisn || cleanNis || "Siswa";
       var fileName = fileNamePrefix + "_" + cleanNama + ".jpg";
       
+      // Hapus file pasfoto lama siswa ini jika sudah ada di folder agar tidak terjadi duplikasi foto di Google Drive
+      var existingFiles = folder.getFilesByName(fileName);
+      while (existingFiles.hasNext()) {
+        var oldFile = existingFiles.next();
+        try {
+          oldFile.setTrashed(true);
+        } catch (trashErr) {}
+      }
+      
       var blob = Utilities.newBlob(decodedBytes, contentType, fileName);
       
       var file = folder.createFile(blob);

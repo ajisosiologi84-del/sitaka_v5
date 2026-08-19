@@ -588,16 +588,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
       };
 
       if (gasUrl) {
-        try {
-          await fetch(gasUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'update', student: studentToSave }),
-          });
-          setAppsScriptStatus('Tersimpan di Lokal & Google Sheets!');
-        } catch (err) {
-          console.warn('Apps Script sync failed:', err);
-        }
+        setAppsScriptStatus('Mengirim data ke Google Sheets & Drive...');
       }
 
       onSaveStudent(studentToSave);
@@ -610,16 +601,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
       };
 
       if (gasUrl) {
-        try {
-          await fetch(gasUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'save', student: payloadData }),
-          });
-          setAppsScriptStatus('Tersimpan di Lokal & Google Sheets!');
-        } catch (err) {
-          console.warn('Apps Script sync failed:', err);
-        }
+        setAppsScriptStatus('Mengirim data ke Google Sheets & Drive...');
       }
 
       onSaveStudent(payloadData);
