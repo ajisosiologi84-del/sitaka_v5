@@ -263,10 +263,10 @@ export const StudentFormPdfModal: React.FC<StudentFormPdfModalProps> = ({
             <!-- KOP SURAT -->
             <div class="kop-header">
               <div style="font-size: 9px; font-weight: 800; color: #312e81; text-transform: uppercase; letter-spacing: 1px;">
-                PEMERINTAH PROVINSI JAWA BARAT / DKI JAKARTA — DINAS PENDIDIKAN & KEBUDAYAAN
+                PEMERINTAH PROVINSI JAWA TIMUR
               </div>
-              <div class="kop-title">SMA NEGERI UNGGULAN INDONESIA</div>
-              <div class="kop-sub">Jalan Pendidikan No. 845 • Telp: (021) 7890123 • Website: www.sman-unggul.sch.id</div>
+              <div class="kop-title">SMA NEGERI 2 KOTA PASURUAN</div>
+              <div class="kop-sub">Jalan PANGLIMA SUDIRMAN  No. 163 • Telp: (0343) 421059 • Website: www.smadapas.sch.id</div>
               <div>
                 <span class="badge-bukti">BUKTI PENDATAAN SISWA TKA & STUDI LANJUT</span>
                 <div style="font-size: 10px; color: #64748b; font-weight: 600; margin-top: 4px;">
