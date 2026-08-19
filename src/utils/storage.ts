@@ -57,10 +57,10 @@ export const DEFAULT_PROKTOR_TEKNISI: ProktorTeknisi[] = [
 ];
 
 export const DEFAULT_DOCUMENT_SETTINGS: DocumentSettings = {
-  namaSekolah: 'PANITIA TES KEMAMPUAN AKADEMIK (TKA) & ASESMEN NASIONAL 2026',
-  subHeader: 'SMA / MA / SMK KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI',
-  alamatSekolah: 'Jl. Pendidikan Nasional No. 123 | Email: panitiatka2026@sekolah.sch.id',
-  kotaTanggal: 'Jakarta, 12 Oktober 2026',
+  namaSekolah: 'SMA NEGERI 2 KOTA PASURUAN',
+  subHeader: 'PEMERINTAH PROVINSI JAWA TIMUR — DINAS PENDIDIKAN',
+  alamatSekolah: 'Jl. Panglima Sudirman No. 163 | Telp: (0343) 421059 | Website: www.smadapas.sch.id',
+  kotaTanggal: 'Pasuruan, 12 Oktober 2026',
   namaKepalaSekolah: 'Dr. H. Mulyadi, M.Pd.',
   nipKepalaSekolah: '19700505 199503 1 001',
   nomorSuratPrefix: '042/PAN-TKA/AN-2026',

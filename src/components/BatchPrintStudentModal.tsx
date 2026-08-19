@@ -172,13 +172,13 @@ export const BatchPrintStudentModal: React.FC<BatchPrintStudentModalProps> = ({
             <!-- KOP SURAT -->
             <div style="text-align: center; border-bottom: 3px double #0f172a; padding-bottom: 8px; margin-bottom: 12px;">
               <div style="font-size: 9px; font-weight: 800; color: #312e81; text-transform: uppercase; letter-spacing: 1px;">
-                PEMERINTAH PROVINSI JAWA BARAT / DKI JAKARTA — DINAS PENDIDIKAN
+                PEMERINTAH PROVINSI JAWA TIMUR — DINAS PENDIDIKAN
               </div>
               <div style="font-size: 15px; font-weight: 900; text-transform: uppercase; color: #0f172a; margin: 2px 0;">
-                SMA NEGERI UNGGULAN INDONESIA
+                SMA NEGERI 2 KOTA PASURUAN
               </div>
               <div style="font-size: 10px; color: #475569;">
-                Jalan Pendidikan No. 845 • Telp: (021) 7890123 • Website: www.sman-unggul.sch.id
+                Jalan PANGLIMA SUDIRMAN No. 163 • Telp: (0343) 421059 • Website: www.smadapas.sch.id
               </div>
               <div style="margin-top: 6px;">
                 <span style="display: inline-block; background-color: #0f172a; color: white; font-weight: 900; font-size: 11px; padding: 3px 10px; border-radius: 4px; text-transform: uppercase;">
@@ -352,7 +352,7 @@ export const BatchPrintStudentModal: React.FC<BatchPrintStudentModalProps> = ({
               </div>
               <div style="text-align: right; font-weight: 700; font-size: 9.5px; color: #334155;">
                 <span>STATUS: TERVERIFIKASI</span>
-                <span style="display: block; color: #047857; font-size: 8.5px;">SMA NEGERI UNGGULAN</span>
+                <span style="display: block; color: #047857; font-size: 8.5px;">SMA NEGERI 2 KOTA PASURUAN</span>
               </div>
             </div>
           </div>
@@ -444,10 +444,10 @@ export const BatchPrintStudentModal: React.FC<BatchPrintStudentModalProps> = ({
         <body>
           <div style="text-align: center; border-bottom: 3px double #0f172a; padding-bottom: 10px; margin-bottom: 12px;">
             <div style="font-size: 10px; font-weight: 800; color: #312e81; text-transform: uppercase;">
-              PEMERINTAH PROVINSI JAWA BARAT / DKI JAKARTA — DINAS PENDIDIKAN
+              PEMERINTAH PROVINSI JAWA TIMUR — DINAS PENDIDIKAN
             </div>
             <div style="font-size: 16px; font-weight: 900; text-transform: uppercase; color: #0f172a; margin: 2px 0;">
-              SMA NEGERI UNGGULAN INDONESIA
+              SMA NEGERI 2 KOTA PASURUAN
             </div>
             <div style="font-size: 11px; color: #475569;">
               DAFTAR REKAPITULASI HASIL INPUT SISWA TKA & TARGET STUDI LANJUT

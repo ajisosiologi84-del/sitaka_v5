@@ -839,19 +839,19 @@ export const StudentFormPdfModal: React.FC<StudentFormPdfModalProps> = ({
                 </div>
                 <div className="text-left">
                   <div className="text-[10px] font-extrabold text-indigo-900 uppercase tracking-widest">
-                    PEMERINTAH PROVINSI JAWA BARAT / DKI JAKARTA
+                    PEMERINTAH PROVINSI JAWA TIMUR
                   </div>
                   <div className="text-xs font-extrabold text-slate-900 uppercase">
-                    DINAS PENDIDIKAN & KEBUDAYAAN
+                    DINAS PENDIDIKAN
                   </div>
                 </div>
               </div>
 
               <h2 className="text-base font-black text-slate-900 uppercase tracking-wide">
-                SMA NEGERI UNGGULAN INDONESIA
+                SMA NEGERI 2 KOTA PASURUAN
               </h2>
               <p className="text-[10px] text-slate-600 font-medium">
-                Jalan Pendidikan No. 845 • Telp: (021) 7890123 • Website: www.sman-unggul.sch.id
+                Jalan PANGLIMA SUDIRMAN No. 163 • Telp: (0343) 421059 • Website: www.smadapas.sch.id
               </p>
               <div className="pt-2">
                 <span className="inline-block px-3 py-1 bg-slate-900 text-white font-black text-xs uppercase tracking-wider rounded-md">
