@@ -954,6 +954,7 @@ export default function App() {
                 }
               }}
               onOpenBanPtDirectory={() => setActiveTab('banpt')}
+              onOpenMapelPilihan={() => setActiveTab('mapelPilihan')}
               prefilledBanPtSelection={pendingBanPtSelection}
               onClearPrefilledBanPt={() => setPendingBanPtSelection(null)}
               userRole={userRole}

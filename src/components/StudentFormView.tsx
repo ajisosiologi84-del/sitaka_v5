@@ -69,6 +69,7 @@ interface StudentFormViewProps {
   onSaveStudent: (studentData: Omit<Student, 'id' | 'updatedAt'> | Student) => void;
   onCancel: () => void;
   onOpenBanPtDirectory?: () => void;
+  onOpenMapelPilihan?: () => void;
   prefilledBanPtSelection?: BanPtSelectionItem | null;
   onClearPrefilledBanPt?: () => void;
   userRole?: 'superadmin' | 'walikelas' | 'bk' | 'proktor' | 'siswa' | null;
@@ -82,6 +83,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
   onSaveStudent,
   onCancel,
   onOpenBanPtDirectory,
+  onOpenMapelPilihan,
   prefilledBanPtSelection,
   onClearPrefilledBanPt,
   userRole,
@@ -1397,6 +1399,62 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                   </div>
                 </div>
 
+                {/* BANNER 1: HIMBAUAN INGATAN SISWA CEK DIREKTORI PRODI & MAPEL PILIHAN */}
+                <div className="p-4 bg-gradient-to-r from-amber-500/15 via-indigo-500/10 to-emerald-500/15 border-2 border-amber-300 rounded-2xl space-y-3 text-amber-950 shadow-2xs">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2.5 bg-amber-500 text-white rounded-xl shrink-0 shadow-xs mt-0.5">
+                        <AlertTriangle className="w-5 h-5" />
+                      </div>
+                      <div className="space-y-1">
+                        <h5 className="font-extrabold text-amber-950 text-xs sm:text-sm uppercase tracking-wide flex items-center gap-1.5">
+                          <span>PERHATIAN SISWA SEBELUM MENGISI PILIHAN 1 & 2</span>
+                        </h5>
+                        <p className="text-xs text-amber-900 leading-relaxed font-medium">
+                          Siswa diimbau untuk <strong>melihat dan mempelajari terlebih dahulu</strong> menu <strong>"Direktori Prodi PTN"</strong> dan <strong>"Mata Pelajaran Pilihan TKA"</strong> sebelum mengisi data Pilihan 1 & 2 agar linieritas mata pelajaran pendukung serta akreditasi resmi BAN-PT terjamin tepat.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-amber-200/60">
+                      {onOpenBanPtDirectory && (
+                        <button
+                          type="button"
+                          onClick={onOpenBanPtDirectory}
+                          className="flex-1 sm:flex-initial px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Building2 className="w-3.5 h-3.5 text-indigo-200" />
+                          <span>1. Cek Direktori Prodi PTN</span>
+                        </button>
+                      )}
+                      {onOpenMapelPilihan && (
+                        <button
+                          type="button"
+                          onClick={onOpenMapelPilihan}
+                          className="flex-1 sm:flex-initial px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <BookOpenCheck className="w-3.5 h-3.5 text-emerald-200" />
+                          <span>2. Cek Mapel Pilihan</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* BANNER 2: INFORMASI KETIK MANUAL JIKA PRODI / UNIVERSITAS TIDAK ADA DI DROPDOWN */}
+                <div className="p-3.5 bg-sky-50 border border-sky-200 rounded-2xl text-sky-950 text-xs flex items-start gap-3 shadow-2xs">
+                  <div className="p-2 bg-sky-500 text-white rounded-xl shrink-0 shadow-xs">
+                    <HelpCircle className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <span className="font-extrabold text-sky-900 block text-xs">
+                      ℹ️ PETUNJUK INPUT PISAHAN UNIVERSITAS & PROGRAM STUDI:
+                    </span>
+                    <p className="text-[11px] text-sky-800 leading-relaxed font-medium">
+                      Formulir menyediakan rekomendasi (*dropdown*). <strong>Apabila Perguruan Tinggi atau Program Studi yang Anda tuju TIDAK ADA di pilihan dropdown, Anda DAPAT MENGETIKNYA SECARA MANUAL (ketik sendiri) nama Universitas & Prodi tersebut secara lengkap.</strong>
+                    </p>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* PILIHAN 1 CARD */}
                   <div className="bg-white p-4 rounded-xl border border-emerald-200 shadow-2xs space-y-3">
@@ -1689,187 +1747,7 @@ export const StudentFormView: React.FC<StudentFormViewProps> = ({
                   </div>
                 </div>
 
-                {/* INTEGRATION PANEL: LINIERITAS MAPEL TKA VS DATABASE MAPEL PILIHAN (845 DATA) */}
-                <div className="bg-gradient-to-br from-indigo-900 via-slate-900 to-indigo-950 text-white p-5 rounded-2xl shadow-md border border-indigo-800/50 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-indigo-700/50 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="p-2 bg-indigo-500/20 rounded-xl border border-indigo-400/30">
-                        <Layers className="w-5 h-5 text-indigo-300" />
-                      </div>
-                      <div>
-                        <h5 className="font-extrabold text-sm text-white">
-                          Analisis Linieritas TKA & Matrix Database (845 Prodi)
-                        </h5>
-                        <p className="text-[11px] text-indigo-200">
-                          Keterhubungan Mapel TKA dengan Database Kurikulum Merdeka & SNBP Kemdikbud Ristek.
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold bg-indigo-500/30 border border-indigo-400/40 text-indigo-200 px-2.5 py-1 rounded-full shrink-0">
-                      Kemdikbud 845 Matrix
-                    </span>
-                  </div>
-
-                  {/* Cross-Check Cards for Section 3 Choices */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {/* Choice 1 Cross-Check */}
-                    {(() => {
-                      const eval1 = evaluateLinearity(formData.prodiPilihan1, formData.mapelTka1, formData.mapelTka2);
-                      return (
-                        <div className="bg-white/10 backdrop-blur-md p-3.5 rounded-xl border border-white/15 space-y-2 text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-indigo-200 text-[11px] uppercase tracking-wider flex items-center gap-1">
-                              <span className="w-4 h-4 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[9px] font-bold">1</span>
-                              Linieritas Pilihan 1
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${eval1.color}`}>
-                              {eval1.status}
-                            </span>
-                          </div>
-                          <p className="font-bold text-white text-xs truncate">
-                            {formData.prodiPilihan1 || 'Belum diisi'}
-                          </p>
-                          {eval1.matchedData ? (
-                            <div className="space-y-1 bg-black/20 p-2 rounded-lg text-[11px]">
-                              <div className="flex justify-between text-indigo-200">
-                                <span>Mapel Pendukung Resmi:</span>
-                              </div>
-                              <div className="font-semibold text-amber-300">
-                                1. {eval1.matchedData.mapelPendukung1}
-                              </div>
-                              <div className="font-semibold text-amber-300">
-                                2. {eval1.matchedData.mapelPendukung2}
-                              </div>
-                              {eval1.score < 2 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    handleChange('mapelTka1', eval1.matchedData?.mapelPendukung1 || formData.mapelTka1);
-                                    handleChange('mapelTka2', eval1.matchedData?.mapelPendukung2 || formData.mapelTka2);
-                                  }}
-                                  className="mt-1.5 w-full py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] rounded-lg transition-colors flex items-center justify-center gap-1 shadow-xs"
-                                >
-                                  <Sparkles className="w-3 h-3 text-amber-300" />
-                                  <span>Sesuaikan Mapel TKA ke Pilihan 1 Ini</span>
-                                </button>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-[11px] text-slate-300 italic">
-                              Masukkan nama program studi spesifik untuk melihat rekomendasi mapel pendukung resmi.
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                    {/* Choice 2 Cross-Check */}
-                    {(() => {
-                      const eval2 = evaluateLinearity(formData.prodiPilihan2, formData.mapelTka1, formData.mapelTka2);
-                      return (
-                        <div className="bg-white/10 backdrop-blur-md p-3.5 rounded-xl border border-white/15 space-y-2 text-xs">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-indigo-200 text-[11px] uppercase tracking-wider flex items-center gap-1">
-                              <span className="w-4 h-4 rounded-full bg-teal-500 text-white flex items-center justify-center text-[9px] font-bold">2</span>
-                              Linieritas Pilihan 2
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${eval2.color}`}>
-                              {eval2.status}
-                            </span>
-                          </div>
-                          <p className="font-bold text-white text-xs truncate">
-                            {formData.prodiPilihan2 || 'Belum diisi'}
-                          </p>
-                          {eval2.matchedData ? (
-                            <div className="space-y-1 bg-black/20 p-2 rounded-lg text-[11px]">
-                              <div className="flex justify-between text-indigo-200">
-                                <span>Mapel Pendukung Resmi:</span>
-                              </div>
-                              <div className="font-semibold text-teal-300">
-                                1. {eval2.matchedData.mapelPendukung1}
-                              </div>
-                              <div className="font-semibold text-teal-300">
-                                2. {eval2.matchedData.mapelPendukung2}
-                              </div>
-                              {eval2.score < 2 && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    handleChange('mapelTka1', eval2.matchedData?.mapelPendukung1 || formData.mapelTka1);
-                                    handleChange('mapelTka2', eval2.matchedData?.mapelPendukung2 || formData.mapelTka2);
-                                  }}
-                                  className="mt-1.5 w-full py-1.5 bg-teal-600 hover:bg-teal-500 text-white font-bold text-[10px] rounded-lg transition-colors flex items-center justify-center gap-1 shadow-xs"
-                                >
-                                  <Sparkles className="w-3 h-3 text-amber-300" />
-                                  <span>Sesuaikan Mapel TKA ke Pilihan 2 Ini</span>
-                                </button>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-[11px] text-slate-300 italic">
-                              Masukkan nama program studi spesifik untuk melihat rekomendasi mapel pendukung resmi.
-                            </p>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </div>
-
-                  {/* Quick Search Widget in 845 Database */}
-                  <div className="bg-black/25 p-3.5 rounded-xl border border-white/10 space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-indigo-200 flex items-center gap-1.5">
-                        <Search className="w-3.5 h-3.5 text-indigo-400" />
-                        <span>Cari Rekomendasi Mapel untuk Program Studi Lain (Database 845 Data):</span>
-                      </label>
-                    </div>
-                    <input
-                      type="text"
-                      value={mapelSearchQuery}
-                      onChange={(e) => setMapelSearchQuery(e.target.value)}
-                      placeholder="Ketik jurusan tujuan (contoh: Kedokteran, Informatika, Hukum, Psikologi, Farmasi)..."
-                      className="w-full px-3.5 py-2 bg-white/10 border border-white/20 rounded-xl text-xs text-white placeholder-indigo-200/60 focus:outline-none focus:ring-2 focus:ring-indigo-400/50"
-                    />
-
-                    {mapelSearchQuery.trim() !== '' && (
-                      <div className="max-h-48 overflow-y-auto space-y-2 pr-1 pt-1">
-                        {MAPEL_PILIHAN_845_LIST.filter(
-                          (item) =>
-                            item.kelompokProdi.toLowerCase().includes(mapelSearchQuery.toLowerCase()) ||
-                            item.rumpunIlmo.toLowerCase().includes(mapelSearchQuery.toLowerCase())
-                        )
-                          .slice(0, 5)
-                          .map((item) => (
-                            <div
-                              key={item.no}
-                              className="bg-white/10 hover:bg-white/20 p-2.5 rounded-lg border border-white/10 flex items-center justify-between gap-2 text-xs transition-colors"
-                            >
-                              <div>
-                                <div className="font-bold text-white text-xs">{item.kelompokProdi}</div>
-                                <div className="text-[10px] text-indigo-200 flex items-center gap-2 mt-0.5">
-                                  <span>Rumpun: {item.rumpunIlmo}</span>
-                                  <span>•</span>
-                                  <span className="text-amber-300 font-semibold">
-                                    Pendukung: {item.mapelPendukung1} & {item.mapelPendukung2}
-                                  </span>
-                                </div>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  handleChange('mapelTka1', item.mapelPendukung1);
-                                  handleChange('mapelTka2', item.mapelPendukung2);
-                                }}
-                                className="px-2.5 py-1 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-[10px] rounded-md shrink-0 transition-colors"
-                              >
-                                Terapkan Mapel
-                              </button>
-                            </div>
-                          ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
+                {/* INTEGRATION PANEL: LINIERITAS MAPEL TKA VS DATABASE MAPEL PILIHAN (845 DATA) - HIDDEN AS REQUESTED */}
 
                 {/* Panel Pertimbangan Matang untuk Siswa & Orang Tua */}
                 <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4.5 rounded-2xl border border-indigo-900/60 shadow-lg space-y-3">
